@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,10 +24,10 @@ const LandingPage: React.FC = () => {
                 Unlock funding opportunities for your groundbreaking research at Africa University. Apply today and turn your innovative ideas into reality.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button asChild size="lg" variant="white" className="text-[#cf2e2e]">
+                <Button asChild size="lg" variant="white" className="bg-black text-white hover:bg-black/90">
                   <Link to="/login">Apply Now</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+                <Button asChild size="lg" variant="outline" className="border-white bg-transparent text-white hover:bg-white/10">
                   <Link to="/opportunities">Browse Grants</Link>
                 </Button>
               </div>
@@ -166,10 +165,10 @@ const LandingPage: React.FC = () => {
             Join hundreds of Africa University researchers who have successfully secured grants for their innovative work.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button asChild size="lg" variant="white" className="text-[#cf2e2e]">
+            <Button asChild size="lg" variant="white" className="bg-black text-white hover:bg-black/90">
               <Link to="/register">Create Account</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+            <Button asChild size="lg" variant="outline" className="border-white bg-transparent text-white hover:bg-white/10">
               <Link to="/login">Sign In</Link>
             </Button>
           </div>

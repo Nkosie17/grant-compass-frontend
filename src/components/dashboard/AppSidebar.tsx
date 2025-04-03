@@ -145,9 +145,9 @@ export const AppSidebar: React.FC = () => {
           <img 
             src="/lovable-uploads/4af217f9-8ca2-4acc-8ba4-9320b16cf567.png" 
             alt="Africa University" 
-            className="h-8"
+            className="h-12 w-auto" 
           />
-          <span className="text-lg font-semibold">AU Grant</span>
+          <span className="text-lg font-semibold">AU GMS</span>
         </div>
         <SidebarTrigger className="text-white" />
       </SidebarHeader>
