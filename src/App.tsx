@@ -23,6 +23,19 @@ import OpportunitiesList from "@/components/opportunities/OpportunitiesList";
 import MyGrants from "@/components/grants/MyGrants";
 import NotFound from "@/components/NotFound";
 
+// New pages
+import MessagesPage from "@/components/dashboard/messages/MessagesPage";
+import SettingsPage from "@/components/dashboard/settings/SettingsPage";
+import ReportsPage from "@/components/dashboard/researcher/ReportsPage";
+import CalendarPage from "@/components/dashboard/researcher/CalendarPage";
+import ReportingPage from "@/components/dashboard/grant-office/ReportingPage";
+import ProposalsPage from "@/components/dashboard/grant-office/ProposalsPage";
+import FinancePage from "@/components/dashboard/grant-office/FinancePage";
+import ApplicationsPage from "@/components/dashboard/grant-office/ApplicationsPage";
+import AdminSettingsPage from "@/components/dashboard/admin/AdminSettingsPage";
+import UserManagementPage from "@/components/dashboard/admin/UserManagementPage";
+import SystemReportsPage from "@/components/dashboard/admin/SystemReportsPage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -56,6 +69,73 @@ const App = () => (
             <Route path="/my-grants" element={
               <DashboardLayout>
                 <MyGrants />
+              </DashboardLayout>
+            } />
+            
+            {/* New Pages */}
+            <Route path="/messages" element={
+              <DashboardLayout>
+                <MessagesPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/settings" element={
+              <DashboardLayout>
+                <SettingsPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/reports" element={
+              <DashboardLayout>
+                <ReportsPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/calendar" element={
+              <DashboardLayout>
+                <CalendarPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/reporting" element={
+              <DashboardLayout>
+                <ReportingPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/proposals" element={
+              <DashboardLayout>
+                <ProposalsPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/finance" element={
+              <DashboardLayout>
+                <FinancePage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/applications" element={
+              <DashboardLayout>
+                <ApplicationsPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/admin-settings" element={
+              <DashboardLayout>
+                <AdminSettingsPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/users" element={
+              <DashboardLayout>
+                <UserManagementPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/system-reports" element={
+              <DashboardLayout>
+                <SystemReportsPage />
               </DashboardLayout>
             } />
             

@@ -128,7 +128,7 @@ export const AppSidebar: React.FC = () => {
             icon: <BarChart2 className="h-4 w-4 mr-2" />,
           },
           {
-            name: "Settings",
+            name: "Admin Settings",
             path: "/admin-settings",
             icon: <Settings className="h-4 w-4 mr-2" />,
           },
@@ -149,7 +149,7 @@ export const AppSidebar: React.FC = () => {
           />
           <span className="text-lg font-semibold">AU GMS</span>
         </div>
-        <SidebarTrigger className="text-white" />
+        {/* Removed the SidebarTrigger */}
       </SidebarHeader>
 
       <SidebarContent className="p-4">
