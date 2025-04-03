@@ -20,8 +20,7 @@ import AdminDashboard from "@/components/dashboard/admin/AdminDashboard";
 
 // Feature Pages
 import OpportunitiesList from "@/components/opportunities/OpportunitiesList";
-
-// Utility Pages
+import MyGrants from "@/components/grants/MyGrants";
 import NotFound from "@/components/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +50,12 @@ const App = () => (
             <Route path="/opportunities" element={
               <DashboardLayout>
                 <OpportunitiesList />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/my-grants" element={
+              <DashboardLayout>
+                <MyGrants />
               </DashboardLayout>
             } />
             

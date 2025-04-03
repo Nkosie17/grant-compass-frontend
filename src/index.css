@@ -109,3 +109,18 @@
 .card-hover {
   @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
 }
+
+/* Primary button with proper contrast */
+.btn-primary {
+  @apply bg-primary text-white hover:bg-primary/90;
+}
+
+/* White background areas with dark text */
+.white-area {
+  @apply bg-white text-au-neutral-900;
+}
+
+/* Red background areas with white text */
+.red-area {
+  @apply bg-primary text-white;
+}
