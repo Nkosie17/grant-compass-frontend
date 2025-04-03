@@ -16,8 +16,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 0 65% 50%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 0 76% 50%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -33,18 +33,18 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 0 65% 50%;
+    --ring: 0 76% 50%;
 
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 0 65% 50%;
+    --sidebar-primary: 0 76% 50%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 0 65% 50%;
+    --sidebar-ring: 0 76% 50%;
   }
 
   .dark {
@@ -57,8 +57,8 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 0 65% 50%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 76% 50%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -74,16 +74,16 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 0 65% 50%;
+    --ring: 0 76% 50%;
     
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 0 65% 50%;
+    --sidebar-primary: 0 76% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 0 65% 50%;
+    --sidebar-ring: 0 76% 50%;
   }
 }
 
@@ -93,7 +93,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter;
+    @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
   }
 }
@@ -112,7 +112,7 @@
 
 /* Primary button with proper contrast */
 .btn-primary {
-  @apply bg-primary text-white hover:bg-primary/90;
+  @apply bg-[#cf2e2e] text-white hover:bg-[#cf2e2e]/90;
 }
 
 /* White background areas with dark text */
@@ -122,5 +122,49 @@
 
 /* Red background areas with white text */
 .red-area {
-  @apply bg-primary text-white;
+  @apply bg-[#cf2e2e] text-white;
+}
+
+.au-red {
+  @apply bg-[#cf2e2e];
+}
+
+.au-purple {
+  @apply text-[#cf2e2e];
+}
+
+.au-purple-dark {
+  @apply text-[#b42929];
+}
+
+.text-au-red {
+  @apply text-[#cf2e2e];
+}
+
+.text-au-neutral-600 {
+  @apply text-gray-600;
+}
+
+.text-au-neutral-900 {
+  @apply text-gray-900;
+}
+
+.bg-au-neutral-100 {
+  @apply bg-gray-100;
+}
+
+.bg-au-neutral-900 {
+  @apply bg-gray-900;
+}
+
+.bg-au-purple {
+  @apply bg-[#cf2e2e];
+}
+
+.border-au-red {
+  @apply border-[#cf2e2e];
+}
+
+.hover\:bg-au-red:hover {
+  @apply hover:bg-[#cf2e2e];
 }
