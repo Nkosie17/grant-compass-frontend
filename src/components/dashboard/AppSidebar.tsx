@@ -145,7 +145,7 @@ export const AppSidebar: React.FC = () => {
           <img 
             src="/lovable-uploads/4af217f9-8ca2-4acc-8ba4-9320b16cf567.png" 
             alt="Africa University" 
-            className="h-12 w-auto" 
+            className="h-16 w-auto" 
           />
           <span className="text-lg font-semibold">AU GMS</span>
         </div>
@@ -159,14 +159,18 @@ export const AppSidebar: React.FC = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center px-4 py-2 text-sm rounded-md transition-colors",
+                "flex items-center px-4 py-2 text-sm rounded-md transition-colors group",
                 isActiveRoute(item.path)
                   ? "bg-[#cf2e2e]/10 text-[#cf2e2e] font-medium"
                   : "text-au-neutral-600 hover:bg-au-neutral-100"
               )}
             >
-              {item.icon}
-              <span>{item.name}</span>
+              <div className="flex items-center">
+                {React.cloneElement(item.icon, { 
+                  className: "h-5 w-5 mr-2 group-data-[collapsible=icon]:mx-auto" 
+                })}
+                <span className="group-data-[collapsible=icon]:hidden">{item.name}</span>
+              </div>
             </Link>
           ))}
         </div>
