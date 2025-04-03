@@ -18,7 +18,7 @@ const DEMO_USERS = [
   {
     id: "1",
     name: "John Researcher",
-    email: "researcher@au.edu",
+    email: "researcher@africau.edu",
     password: "password123",
     role: "researcher" as UserRole,
     department: "Computer Science",
@@ -27,7 +27,7 @@ const DEMO_USERS = [
   {
     id: "2",
     name: "Sarah Grant Officer",
-    email: "grants@au.edu",
+    email: "grants@africau.edu",
     password: "password123",
     role: "grant_office" as UserRole,
     department: "Research Administration",
@@ -36,7 +36,7 @@ const DEMO_USERS = [
   {
     id: "3",
     name: "Admin User",
-    email: "admin@au.edu",
+    email: "admin@africau.edu",
     password: "password123",
     role: "admin" as UserRole,
     department: "System Administration",
@@ -68,19 +68,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate API request delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      // Find demo user with matching credentials
-      const matchedUser = DEMO_USERS.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-      );
-      
-      if (!matchedUser) {
-        throw new Error("Invalid email or password");
+      // For testing purposes, allow any user to log in with any password
+      // Just check if the email ends with @africau.edu
+      if (email.endsWith('@africau.edu')) {
+        // Check if a demo user with this email exists
+        let matchedUser = DEMO_USERS.find(
+          (u) => u.email.toLowerCase() === email.toLowerCase()
+        );
+        
+        // If no matching demo user, create a temporary one
+        if (!matchedUser) {
+          matchedUser = {
+            id: Date.now().toString(),
+            name: email.split('@')[0],
+            email: email,
+            password: password,
+            role: "researcher" as UserRole,
+            department: "Unspecified",
+            profileImage: "/placeholder.svg"
+          };
+        }
+        
+        // Create user object without password
+        const { password: _, ...userWithoutPassword } = matchedUser;
+        setUser(userWithoutPassword);
+        localStorage.setItem("au_gms_user", JSON.stringify(userWithoutPassword));
+      } else {
+        throw new Error("Please use your Africa University email (@africau.edu)");
       }
-      
-      // Create user object without password
-      const { password: _, ...userWithoutPassword } = matchedUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem("au_gms_user", JSON.stringify(userWithoutPassword));
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
@@ -100,17 +115,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Simulate API request delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      // Check if email already exists
-      if (DEMO_USERS.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
-        throw new Error("Email already in use");
+      // Check if email has the right domain
+      if (!email.endsWith('@africau.edu')) {
+        throw new Error("Please use your Africa University email (@africau.edu)");
       }
       
-      // In a real app, this would create a new user in the database
-      // For demo purposes, we'll just simulate success
-      console.log("Registration successful for:", { name, email, role });
+      // For testing, automatically allow registration and login
+      const newUser = {
+        id: Date.now().toString(),
+        name,
+        email,
+        role,
+        department: "Unspecified",
+        profileImage: "/placeholder.svg"
+      };
       
-      // For demo purposes, you might want to auto-login after registration
-      // or show a "pending approval" message
+      // Auto-login after registration
+      setUser(newUser);
+      localStorage.setItem("au_gms_user", JSON.stringify(newUser));
+      
+      console.log("Registration successful for:", { name, email, role });
     } catch (error) {
       console.error("Registration failed:", error);
       throw error;

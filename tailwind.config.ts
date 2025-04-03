@@ -67,10 +67,10 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				au: {
-					purple: {
-						DEFAULT: '#9b87f5',
-						dark: '#7E69AB',
-						light: '#D6BCFA',
+					red: {
+						DEFAULT: '#cf2e2e',
+						dark: '#a82626',
+						light: '#e05252',
 					},
 					neutral: {
 						100: '#F1F0FB',
