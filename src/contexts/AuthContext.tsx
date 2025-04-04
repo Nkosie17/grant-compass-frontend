@@ -9,6 +9,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  getDemoCredentials: () => { role: UserRole; email: string; password: string; name: string }[];
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -143,13 +144,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Function to get demo credentials for display purposes
+  const getDemoCredentials = () => {
+    return DEMO_USERS.map(user => ({
+      role: user.role,
+      email: user.email,
+      password: user.password,
+      name: user.name
+    }));
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
     logout,
-    register
+    register,
+    getDemoCredentials
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
