@@ -9,7 +9,12 @@ export type GrantStatus =
   | "active"
   | "completed";
 
-export type FundingSource = "internal" | "external";
+export type FundingSource = 
+  | "internal" 
+  | "external" 
+  | "government" 
+  | "private" 
+  | "foundation";
 
 export type GrantCategory = 
   | "research" 
