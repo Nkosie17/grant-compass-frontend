@@ -9,7 +9,7 @@ export type GrantStatus =
   | "active"
   | "completed";
 
-export type FundingSource = "internal" | "external" | "government" | "private" | "foundation";
+export type FundingSource = "internal" | "external";
 
 export type GrantCategory = 
   | "research" 
@@ -30,6 +30,12 @@ export interface Grant {
   fundingSource: FundingSource;
   submittedBy?: string;
   submittedDate?: string;
+  researcherId?: string;
+  researcherName?: string;
+  department?: string;
+  reviewComments?: string;
+  reviewedBy?: string;
+  reviewedDate?: string;
 }
 
 export interface GrantOpportunity {
@@ -42,4 +48,26 @@ export interface GrantOpportunity {
   category: GrantCategory;
   fundingSource: FundingSource;
   applicationUrl?: string;
+  postedBy?: string;
+  postedDate?: string;
+}
+
+export interface GrantReport {
+  id: string;
+  grantId: string;
+  title: string;
+  dueDate: string;
+  submissionDate?: string;
+  status: "pending" | "submitted" | "approved" | "rejected";
+  comments?: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  message: string;
+  type: "due_date" | "report_submission" | "status_update" | "opportunity";
+  relatedId?: string; // Can be grantId, reportId, etc.
+  isRead: boolean;
+  createdAt: string;
 }

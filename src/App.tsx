@@ -21,6 +21,9 @@ import AdminDashboard from "@/components/dashboard/admin/AdminDashboard";
 // Feature Pages
 import OpportunitiesList from "@/components/opportunities/OpportunitiesList";
 import MyGrants from "@/components/grants/MyGrants";
+import GrantApplicationForm from "@/components/grants/GrantApplicationForm";
+import CreateOpportunityForm from "@/components/grants/CreateOpportunityForm";
+import GrantReviewForm from "@/components/grants/GrantReviewForm";
 import NotFound from "@/components/NotFound";
 
 // New pages
@@ -56,6 +59,25 @@ const App = () => (
             <Route path="/dashboard" element={
               <DashboardLayout>
                 <DashboardRouter />
+              </DashboardLayout>
+            } />
+            
+            {/* Grant Application Feature */}
+            <Route path="/grant-application" element={
+              <DashboardLayout>
+                <GrantApplicationForm />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/grant-review/:grantId" element={
+              <DashboardLayout>
+                <GrantReviewForm />
+              </DashboardLayout>
+            } />
+
+            <Route path="/create-opportunity" element={
+              <DashboardLayout>
+                <CreateOpportunityForm />
               </DashboardLayout>
             } />
             
