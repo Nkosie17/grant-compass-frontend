@@ -1,14 +1,17 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Filter, Plus, Search, UserPlus, Users, X } from "lucide-react";
+import AddUserForm from "./AddUserForm";
 
 const UserManagementPage: React.FC = () => {
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const users = [
     {
       id: 1,
@@ -73,10 +76,23 @@ const UserManagementPage: React.FC = () => {
           <Users className="h-6 w-6 mr-2 text-[#cf2e2e]" />
           <h1 className="text-2xl font-bold">User Management</h1>
         </div>
-        <Button variant="red" className="flex items-center gap-2">
-          <UserPlus className="h-4 w-4" />
-          Add User
-        </Button>
+        <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+          <DialogTrigger asChild>
+            <Button variant="red" className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Add User
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+              <DialogDescription>
+                Create a new account for grant office staff or administrators.
+              </DialogDescription>
+            </DialogHeader>
+            <AddUserForm />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Tabs defaultValue="all-users" className="space-y-6">
@@ -84,7 +100,7 @@ const UserManagementPage: React.FC = () => {
           <TabsList className="grid w-full md:w-auto md:inline-grid grid-cols-3 md:grid-cols-3">
             <TabsTrigger value="all-users">All Users</TabsTrigger>
             <TabsTrigger value="researchers">Researchers</TabsTrigger>
-            <TabsTrigger value="administrators">Administrators</TabsTrigger>
+            <TabsTrigger value="administrators">Staff & Admins</TabsTrigger>
           </TabsList>
           
           <div className="flex gap-2">

@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import {
   Home,
   File,
-  MessageSquare,
+  Bell,
   BarChart2,
   Calendar,
   Settings,
@@ -23,7 +23,6 @@ import {
   Users,
   FileText,
   Search,
-  Bell,
 } from "lucide-react";
 
 export const AppSidebar: React.FC = () => {
@@ -53,9 +52,9 @@ export const AppSidebar: React.FC = () => {
         icon: <Home className="h-4 w-4 mr-2" />,
       },
       {
-        name: "Messages",
-        path: "/messages",
-        icon: <MessageSquare className="h-4 w-4 mr-2" />,
+        name: "Notifications",
+        path: "/notifications",
+        icon: <Bell className="h-4 w-4 mr-2" />,
       },
       {
         name: "Settings",
@@ -149,7 +148,6 @@ export const AppSidebar: React.FC = () => {
           />
           <span className="text-lg font-semibold">AU GMS</span>
         </div>
-        {/* Removed the SidebarTrigger */}
       </SidebarHeader>
 
       <SidebarContent className="p-4">

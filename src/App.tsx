@@ -27,7 +27,7 @@ import GrantReviewForm from "@/components/grants/GrantReviewForm";
 import NotFound from "@/components/NotFound";
 
 // New pages
-import MessagesPage from "@/components/dashboard/messages/MessagesPage";
+import NotificationsPage from "@/components/dashboard/notifications/NotificationsPage";
 import SettingsPage from "@/components/dashboard/settings/SettingsPage";
 import ReportsPage from "@/components/dashboard/researcher/ReportsPage";
 import CalendarPage from "@/components/dashboard/researcher/CalendarPage";
@@ -69,6 +69,12 @@ const App = () => (
               </DashboardLayout>
             } />
             
+            <Route path="/new-application" element={
+              <DashboardLayout>
+                <GrantApplicationForm />
+              </DashboardLayout>
+            } />
+            
             <Route path="/grant-review/:grantId" element={
               <DashboardLayout>
                 <GrantReviewForm />
@@ -95,9 +101,9 @@ const App = () => (
             } />
             
             {/* New Pages */}
-            <Route path="/messages" element={
+            <Route path="/notifications" element={
               <DashboardLayout>
-                <MessagesPage />
+                <NotificationsPage />
               </DashboardLayout>
             } />
             

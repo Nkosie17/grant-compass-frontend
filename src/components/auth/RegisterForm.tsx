@@ -15,7 +15,7 @@ const RegisterForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("researcher");
+  const [role] = useState<UserRole>("researcher");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ const RegisterForm: React.FC = () => {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Create an Account</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to register for the Grant Management System
+            Register for a researcher account with the Grant Management System
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -103,18 +103,9 @@ const RegisterForm: React.FC = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <RadioGroup value={role} onValueChange={(value) => setRole(value as UserRole)} className="flex flex-col space-y-1">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="researcher" id="researcher" />
-                  <Label htmlFor="researcher">Researcher</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="grant_office" id="grant_office" />
-                  <Label htmlFor="grant_office">Grant Office Staff</Label>
-                </div>
-              </RadioGroup>
+            <div className="p-2 rounded-lg bg-blue-50 text-blue-800 text-sm">
+              <p>You are registering as a <strong>Researcher</strong>. Only researchers can self-register.</p>
+              <p className="mt-1 text-xs">Grant Office Staff accounts are created by administrators.</p>
             </div>
             
             <Button
