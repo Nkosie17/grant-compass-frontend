@@ -9,24 +9,14 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-
-interface IPItem {
-  id: string;
-  title: string;
-  type: "patent" | "copyright" | "trademark" | "trade_secret";
-  registrationNumber: string;
-  filingDate: string;
-  grantId: string;
-  researchers: string[];
-  status: "pending" | "registered" | "rejected" | "protected";
-}
+import { IPItem, IPType } from "@/types/grants";
 
 interface IPTableProps {
   items: IPItem[];
 }
 
 const IPTable: React.FC<IPTableProps> = ({ items }) => {
-  const getTypeLabel = (type: string) => {
+  const getTypeLabel = (type: IPType) => {
     switch (type) {
       case "patent": return "Patent";
       case "copyright": return "Copyright";

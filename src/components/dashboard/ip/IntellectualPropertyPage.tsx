@@ -13,13 +13,14 @@ import { PlusCircle } from "lucide-react";
 import IPTable from "./IPTable";
 import IPForm from "./IPForm";
 import DashboardHeader from "../DashboardHeader";
+import { IPItem, IPType } from "@/types/grants";
 
 // Mock data for intellectual property items
-const MOCK_IP_ITEMS = [
+const MOCK_IP_ITEMS: IPItem[] = [
   {
     id: "ip1",
     title: "Novel Approach for Sustainable Agriculture",
-    type: "patent",
+    type: "patent" as IPType,
     registrationNumber: "PAT123456",
     filingDate: "2023-05-15",
     grantId: "grant123",
@@ -29,7 +30,7 @@ const MOCK_IP_ITEMS = [
   {
     id: "ip2",
     title: "Africa University Research Methodology Handbook",
-    type: "copyright",
+    type: "copyright" as IPType,
     registrationNumber: "CR789012",
     filingDate: "2023-02-10",
     grantId: "grant456",
@@ -39,7 +40,7 @@ const MOCK_IP_ITEMS = [
   {
     id: "ip3",
     title: "AU Research Analytics Platform",
-    type: "trademark",
+    type: "trademark" as IPType,
     registrationNumber: "TM345678",
     filingDate: "2023-07-22",
     grantId: "grant789",
@@ -49,7 +50,7 @@ const MOCK_IP_ITEMS = [
   {
     id: "ip4",
     title: "Innovative Water Purification Process",
-    type: "trade_secret",
+    type: "trade_secret" as IPType,
     registrationNumber: "TS901234",
     filingDate: "2023-03-30",
     grantId: "grant123",
@@ -60,14 +61,14 @@ const MOCK_IP_ITEMS = [
 
 const IntellectualPropertyPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
-  const [ipItems, setIpItems] = useState(MOCK_IP_ITEMS);
+  const [ipItems, setIpItems] = useState<IPItem[]>(MOCK_IP_ITEMS);
   const [activeTab, setActiveTab] = useState("all");
   
   const filteredItems = activeTab === "all" 
     ? ipItems 
     : ipItems.filter(item => item.type === activeTab);
   
-  const handleAddIP = (newIP: any) => {
+  const handleAddIP = (newIP: Omit<IPItem, "id">) => {
     setIpItems([...ipItems, { id: `ip${ipItems.length + 1}`, ...newIP }]);
     setShowForm(false);
   };

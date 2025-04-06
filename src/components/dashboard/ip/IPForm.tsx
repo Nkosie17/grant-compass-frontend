@@ -6,16 +6,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { IPItem, IPType } from "@/types/grants";
 
 interface IPFormProps {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: Omit<IPItem, "id">) => void;
   onCancel: () => void;
 }
 
 const IPForm: React.FC<IPFormProps> = ({ onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<IPItem, "id" | "researchers"> & { researchers: string }>({
     title: "",
-    type: "patent",
+    type: "patent" as IPType,
     registrationNumber: "",
     filingDate: new Date().toISOString().split("T")[0],
     grantId: "",
