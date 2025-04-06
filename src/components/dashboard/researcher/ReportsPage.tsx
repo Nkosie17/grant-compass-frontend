@@ -1,11 +1,15 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, Filter, Plus } from "lucide-react";
+import ReportDetails from "./ReportDetails";
 
 const ReportsPage: React.FC = () => {
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [reportDetailsOpen, setReportDetailsOpen] = useState(false);
+
   const reports = [
     {
       id: 1,
@@ -14,6 +18,8 @@ const ReportsPage: React.FC = () => {
       type: "Progress",
       submittedDate: "2023-11-15",
       status: "Approved",
+      content: "In this quarterly report, we outline the progress made on our climate change adaptation research. We have conducted surveys in 5 communities, collected environmental data from 12 sites, and completed preliminary analysis on adaptation strategies currently in use by local populations. Initial findings suggest that community-led initiatives have been more successful than top-down policy implementations.",
+      feedback: "Excellent progress. The methodology is sound and the preliminary results are promising. Continue with the community engagement approach as planned."
     },
     {
       id: 2,
@@ -22,6 +28,7 @@ const ReportsPage: React.FC = () => {
       type: "Financial",
       submittedDate: "2023-10-22",
       status: "Pending Review",
+      content: "This financial report covers the expenditures from July through September 2023. We have utilized 35% of the allocated budget, primarily for equipment purchases and field research. Notable expenditures include solar panel testing kits ($12,500) and community workshop materials ($5,200).",
     },
     {
       id: 3,
@@ -30,6 +37,8 @@ const ReportsPage: React.FC = () => {
       type: "Final",
       submittedDate: "2023-09-05",
       status: "Needs Revision",
+      content: "Final report on the impact assessment of introduced agricultural technologies in target communities. The 18-month project examined adoption rates, yield improvements, and economic impacts of three new farming technologies.",
+      feedback: "Please expand the methodology section to include more details on control groups. The economic impact analysis needs more quantitative support and comparative data from similar regions."
     },
     {
       id: 4,
@@ -38,6 +47,7 @@ const ReportsPage: React.FC = () => {
       type: "Progress",
       submittedDate: "2023-12-01",
       status: "Pending Review",
+      content: "This quarterly update covers our progress on the public health intervention study in urban areas. We have completed the first phase of data collection, including health surveys from 350 participants and environmental health assessments of 20 locations."
     },
   ];
 
@@ -61,6 +71,15 @@ const ReportsPage: React.FC = () => {
       lastUpdated: "2023-11-05",
     },
   ];
+
+  const handleViewReport = (report: any) => {
+    setSelectedReport(report);
+    setReportDetailsOpen(true);
+  };
+
+  const closeReportDetails = () => {
+    setReportDetailsOpen(false);
+  };
 
   return (
     <div className="p-6">
@@ -113,7 +132,8 @@ const ReportsPage: React.FC = () => {
                 {reports.map((report) => (
                   <div 
                     key={report.id}
-                    className="grid grid-cols-12 p-3 text-sm border-t hover:bg-muted/50 transition-colors"
+                    className="grid grid-cols-12 p-3 text-sm border-t hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleViewReport(report)}
                   >
                     <div className="col-span-4 font-medium flex items-center gap-2">
                       <FileText className="h-4 w-4 text-[#cf2e2e]" />
@@ -195,6 +215,13 @@ const ReportsPage: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Report Details Dialog */}
+      <ReportDetails 
+        report={selectedReport} 
+        isOpen={reportDetailsOpen} 
+        onClose={closeReportDetails} 
+      />
     </div>
   );
 };

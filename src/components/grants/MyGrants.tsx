@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { File, Plus, FileText, FileEdit } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const statusColors: Record<string, string> = {
   draft: "bg-slate-100 text-slate-800 border-slate-200",
@@ -23,6 +24,8 @@ const statusColors: Record<string, string> = {
 const MyGrants: React.FC = () => {
   const { user } = useAuth();
   const [grants, setGrants] = useState<Grant[]>([]);
+  const [selectedGrant, setSelectedGrant] = useState<Grant | null>(null);
+  const [showGrantDetails, setShowGrantDetails] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -70,6 +73,15 @@ const MyGrants: React.FC = () => {
   };
 
   const tabCounts = getTabCounts();
+
+  const handleViewGrant = (grant: Grant) => {
+    setSelectedGrant(grant);
+    setShowGrantDetails(true);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
 
   return (
     <div className="p-6">
@@ -172,7 +184,7 @@ const MyGrants: React.FC = () => {
                                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                                 .join(" ")}
                             </Badge>
-                            <Button variant="ghost" size="sm" onClick={() => navigate(`/grants/${grant.id}`)}>
+                            <Button variant="ghost" size="sm" onClick={() => handleViewGrant(grant)}>
                               View
                             </Button>
                           </div>
@@ -199,6 +211,78 @@ const MyGrants: React.FC = () => {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Grant Details Dialog */}
+      <Dialog open={showGrantDetails} onOpenChange={setShowGrantDetails}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{selectedGrant?.title}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedGrant && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
+                  <Badge 
+                    variant="outline" 
+                    className={statusColors[selectedGrant.status]}
+                  >
+                    {selectedGrant.status.replace(/_/g, " ").split(" ")
+                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(" ")}
+                  </Badge>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Amount</h3>
+                  <p className="font-medium">${selectedGrant.amount.toLocaleString()}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Category</h3>
+                  <p>{selectedGrant.category.charAt(0).toUpperCase() + selectedGrant.category.slice(1)}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Funding Source</h3>
+                  <p>{selectedGrant.fundingSource.charAt(0).toUpperCase() + selectedGrant.fundingSource.slice(1)}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Department</h3>
+                  <p>{selectedGrant.department}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Submitted Date</h3>
+                  <p>{selectedGrant.submittedDate ? formatDate(selectedGrant.submittedDate) : "N/A"}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Project Start</h3>
+                  <p>{formatDate(selectedGrant.startDate)}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Project End</h3>
+                  <p>{formatDate(selectedGrant.endDate)}</p>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-1">Project Description</h3>
+                <p className="text-sm">{selectedGrant.description}</p>
+              </div>
+
+              {selectedGrant.reviewComments && (
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">Review Comments</h3>
+                  <div className="bg-muted/50 p-3 rounded-md text-sm">
+                    {selectedGrant.reviewComments}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Reviewed on {selectedGrant.reviewedDate ? formatDate(selectedGrant.reviewedDate) : "N/A"}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

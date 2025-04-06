@@ -5,9 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { GrantCategory, FundingSource } from "@/types/grants";
-
 import {
   Form,
   FormControl,
@@ -20,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -33,15 +30,17 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Notification } from "@/types/grants";
 
 const formSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
   description: z.string().min(20, "Description must be at least 20 characters"),
   fundingAmount: z.coerce.number().positive("Amount must be positive"),
   deadline: z.date(),
-  eligibility: z.string().min(10, "Eligibility criteria must be at least 10 characters"),
+  eligibility: z.string().min(1, "Eligibility criteria are required"),
   category: z.enum(["research", "education", "community", "infrastructure", "innovation"] as const),
-  fundingSource: z.enum(["internal", "external"] as const),
+  fundingSource: z.enum(["internal", "external", "government", "private", "foundation"] as const),
   applicationUrl: z.string().optional(),
 });
 
@@ -78,29 +77,53 @@ const CreateOpportunityForm: React.FC = () => {
         fundingAmount: data.fundingAmount,
         deadline: data.deadline.toISOString(),
         eligibility: data.eligibility,
-        category: data.category as GrantCategory,
-        fundingSource: data.fundingSource as FundingSource,
-        applicationUrl: data.applicationUrl || null,
+        category: data.category,
+        fundingSource: data.fundingSource,
+        applicationUrl: data.applicationUrl,
         postedBy: user?.id,
         postedDate: new Date().toISOString(),
       };
 
-      // In a real app, this would be an API call to save the opportunity
+      // In a real app, this would be an API call
       console.log("Creating opportunity:", opportunity);
 
       // Simulate an API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       // Store in localStorage for demo purposes
       const existingOpportunities = JSON.parse(localStorage.getItem("au_gms_opportunities") || "[]");
       localStorage.setItem("au_gms_opportunities", JSON.stringify([...existingOpportunities, opportunity]));
 
+      // Send notification to all researchers about the new opportunity
+      createNotificationForResearchers({
+        message: `New grant opportunity: ${data.title}`,
+        type: "opportunity",
+        relatedId: opportunityId,
+      });
+
       toast.success("Grant opportunity posted successfully");
-      navigate("/proposals");
+      navigate("/opportunities");
     } catch (error) {
-      console.error("Error posting opportunity:", error);
-      toast.error("Failed to post grant opportunity");
+      console.error("Error creating opportunity:", error);
+      toast.error("Failed to post opportunity");
     }
+  };
+
+  const createNotificationForResearchers = ({ message, type, relatedId }: { message: string, type: string, relatedId: string }) => {
+    const notificationId = `notification_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    const notification: Notification = {
+      id: notificationId,
+      userId: "all", // Sending to all researchers
+      message: message,
+      type: type,
+      relatedId: relatedId,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+    
+    // In a real app, this would be an API call
+    const existingNotifications = JSON.parse(localStorage.getItem("au_gms_notifications") || "[]");
+    localStorage.setItem("au_gms_notifications", JSON.stringify([...existingNotifications, notification]));
   };
 
   return (
@@ -121,6 +144,9 @@ const CreateOpportunityForm: React.FC = () => {
                     <FormControl>
                       <Input placeholder="Enter the title of the grant opportunity" {...field} />
                     </FormControl>
+                    <FormDescription>
+                      A clear and descriptive title for the grant opportunity.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -210,8 +236,8 @@ const CreateOpportunityForm: React.FC = () => {
                     <FormLabel>Eligibility Criteria</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Describe who is eligible to apply for this grant"
-                        className="h-24"
+                        placeholder="Specify who can apply for this grant"
+                        className="h-20"
                         {...field}
                       />
                     </FormControl>
@@ -267,6 +293,9 @@ const CreateOpportunityForm: React.FC = () => {
                         <SelectContent>
                           <SelectItem value="internal">Internal</SelectItem>
                           <SelectItem value="external">External</SelectItem>
+                          <SelectItem value="government">Government</SelectItem>
+                          <SelectItem value="private">Private</SelectItem>
+                          <SelectItem value="foundation">Foundation</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -280,16 +309,12 @@ const CreateOpportunityForm: React.FC = () => {
                 name="applicationUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>External Application URL (Optional)</FormLabel>
+                    <FormLabel>Application URL (Optional)</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="https://example.com/apply" 
-                        {...field} 
-                        value={field.value || ''} 
-                      />
+                      <Input placeholder="https://..." {...field} />
                     </FormControl>
                     <FormDescription>
-                      For external grants, provide a URL where researchers can apply
+                      External application URL, if applicable.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -297,10 +322,10 @@ const CreateOpportunityForm: React.FC = () => {
               />
 
               <div className="flex justify-end space-x-4">
-                <Button type="button" variant="outline" onClick={() => navigate("/proposals")}>
+                <Button type="button" variant="outline" onClick={() => navigate("/opportunities")}>
                   Cancel
                 </Button>
-                <Button type="submit">Post Opportunity</Button>
+                <Button type="submit">Publish Opportunity</Button>
               </div>
             </form>
           </Form>
