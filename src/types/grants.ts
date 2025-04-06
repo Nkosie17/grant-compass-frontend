@@ -1,3 +1,4 @@
+
 export type GrantStatus = 
   | "draft" 
   | "submitted" 
@@ -29,6 +30,12 @@ export type NotificationType =
   | "status_update"
   | "grant_response"
   | "ip_update";
+
+export type IPType = 
+  | "patent" 
+  | "copyright" 
+  | "trademark" 
+  | "trade_secret";
 
 export interface Grant {
   id: string;
@@ -83,4 +90,15 @@ export interface Notification {
   createdAt: string;
   relatedId?: string; // ID of related grant, report, or opportunity
   relatedType?: "grant" | "report" | "opportunity" | "event";
+}
+
+export interface IPItem {
+  id: string;
+  title: string;
+  type: IPType;
+  registrationNumber: string;
+  filingDate: string;
+  grantId: string;
+  researchers: string[];
+  status: string;
 }

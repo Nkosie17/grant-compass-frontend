@@ -1,7 +1,4 @@
 
-// Assuming this file exists in read-only, we can't modify it directly
-// Instead, we'll create a wrapper component that adds the notification functionality
-
 import React from "react";
 import { toast } from "sonner";
 import { Notification } from "@/types/grants";
@@ -36,5 +33,28 @@ const sendNewOpportunityNotification = (opportunityId: string, opportunityTitle:
   }
 };
 
+// Simple placeholder component that will be replaced with the actual form implementation
+const CreateOpportunityForm = () => {
+  return (
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Create New Opportunity</h1>
+      <p className="text-gray-600 mb-4">
+        This form allows grant office staff to create new funding opportunities for researchers.
+        <br />
+        When published, notifications will automatically be sent to all researchers.
+      </p>
+      {/* The actual form implementation would go here */}
+      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+        <p className="text-yellow-700">
+          This is a placeholder component. The actual implementation would include a form to create new opportunities.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // Export the notification sender function for use in other components
 export { sendNewOpportunityNotification };
+
+// Add default export for the component
+export default CreateOpportunityForm;
