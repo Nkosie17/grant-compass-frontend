@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -38,6 +37,10 @@ import ApplicationsPage from "@/components/dashboard/grant-office/ApplicationsPa
 import AdminSettingsPage from "@/components/dashboard/admin/AdminSettingsPage";
 import UserManagementPage from "@/components/dashboard/admin/UserManagementPage";
 import SystemReportsPage from "@/components/dashboard/admin/SystemReportsPage";
+
+// New IP and Agreements management
+import IntellectualPropertyPage from "@/components/dashboard/ip/IntellectualPropertyPage";
+import AgreementsPage from "@/components/dashboard/agreements/AgreementsPage";
 
 const queryClient = new QueryClient();
 
@@ -100,7 +103,20 @@ const App = () => (
               </DashboardLayout>
             } />
             
-            {/* New Pages */}
+            {/* IP and Agreement Management */}
+            <Route path="/ip-management" element={
+              <DashboardLayout>
+                <IntellectualPropertyPage />
+              </DashboardLayout>
+            } />
+            
+            <Route path="/agreements" element={
+              <DashboardLayout>
+                <AgreementsPage />
+              </DashboardLayout>
+            } />
+            
+            {/* Other Pages */}
             <Route path="/notifications" element={
               <DashboardLayout>
                 <NotificationsPage />

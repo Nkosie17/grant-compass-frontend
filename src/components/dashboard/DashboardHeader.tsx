@@ -1,8 +1,9 @@
 
 import React from "react";
-import { Bell, MessageSquare, Search } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Link } from "react-router-dom";
 
 interface DashboardHeaderProps {
   title: string;
@@ -26,13 +27,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title, subtitle }) =>
             />
             <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           </div>
-          <Button size="icon" variant="ghost" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-au-purple" />
-          </Button>
-          <Button size="icon" variant="ghost" className="relative">
-            <MessageSquare className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-au-purple" />
+          <Button size="icon" variant="ghost" className="relative" asChild>
+            <Link to="/notifications">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-au-purple" />
+            </Link>
           </Button>
         </div>
       </div>

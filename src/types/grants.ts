@@ -1,4 +1,3 @@
-
 export type GrantStatus = 
   | "draft" 
   | "submitted" 
@@ -22,6 +21,14 @@ export type GrantCategory =
   | "community" 
   | "infrastructure" 
   | "innovation";
+
+export type NotificationType = 
+  | "opportunity" 
+  | "due_date" 
+  | "report_submission" 
+  | "status_update"
+  | "grant_response"
+  | "ip_update";
 
 export interface Grant {
   id: string;
@@ -71,8 +78,9 @@ export interface Notification {
   id: string;
   userId: string;
   message: string;
-  type: "due_date" | "report_submission" | "status_update" | "opportunity";
-  relatedId?: string; // Can be grantId, reportId, etc.
+  type: NotificationType;
   isRead: boolean;
   createdAt: string;
+  relatedId?: string; // ID of related grant, report, or opportunity
+  relatedType?: "grant" | "report" | "opportunity" | "event";
 }

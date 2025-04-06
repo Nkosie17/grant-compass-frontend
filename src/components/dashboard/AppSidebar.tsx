@@ -23,6 +23,9 @@ import {
   Users,
   FileText,
   Search,
+  Award,
+  FileSignature,
+  BookOpen
 } from "lucide-react";
 
 export const AppSidebar: React.FC = () => {
@@ -111,6 +114,16 @@ export const AppSidebar: React.FC = () => {
             name: "Call-for-Proposals",
             path: "/proposals",
             icon: <Calendar className="h-4 w-4 mr-2" />,
+          },
+          {
+            name: "IP Management",
+            path: "/ip-management",
+            icon: <Award className="h-4 w-4 mr-2" />,
+          },
+          {
+            name: "Agreements",
+            path: "/agreements",
+            icon: <FileSignature className="h-4 w-4 mr-2" />,
           },
         ];
       case "admin":

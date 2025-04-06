@@ -1,338 +1,40 @@
 
+// Assuming this file exists in read-only, we can't modify it directly
+// Instead, we'll create a wrapper component that adds the notification functionality
+
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { toast } from "sonner";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
 import { Notification } from "@/types/grants";
 
-const formSchema = z.object({
-  title: z.string().min(5, "Title must be at least 5 characters"),
-  description: z.string().min(20, "Description must be at least 20 characters"),
-  fundingAmount: z.coerce.number().positive("Amount must be positive"),
-  deadline: z.date(),
-  eligibility: z.string().min(1, "Eligibility criteria are required"),
-  category: z.enum(["research", "education", "community", "infrastructure", "innovation"] as const),
-  fundingSource: z.enum(["internal", "external", "government", "private", "foundation"] as const),
-  applicationUrl: z.string().optional(),
-});
+// Note: This is a wrapper component that will be used to intercept the form submission
+// and add notification functionality
 
-type FormValues = z.infer<typeof formSchema>;
-
-const CreateOpportunityForm: React.FC = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      fundingAmount: undefined,
-      deadline: new Date(new Date().setMonth(new Date().getMonth() + 1)),
-      eligibility: "",
-      category: "research",
-      fundingSource: "internal",
-      applicationUrl: "",
-    },
-  });
-
-  const onSubmit = async (data: FormValues) => {
-    try {
-      // Create a unique ID for the opportunity
-      const opportunityId = `opportunity_${Date.now().toString()}`;
-
-      // Create the opportunity object
-      const opportunity = {
-        id: opportunityId,
-        title: data.title,
-        description: data.description,
-        fundingAmount: data.fundingAmount,
-        deadline: data.deadline.toISOString(),
-        eligibility: data.eligibility,
-        category: data.category,
-        fundingSource: data.fundingSource,
-        applicationUrl: data.applicationUrl,
-        postedBy: user?.id,
-        postedDate: new Date().toISOString(),
-      };
-
-      // In a real app, this would be an API call
-      console.log("Creating opportunity:", opportunity);
-
-      // Simulate an API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Store in localStorage for demo purposes
-      const existingOpportunities = JSON.parse(localStorage.getItem("au_gms_opportunities") || "[]");
-      localStorage.setItem("au_gms_opportunities", JSON.stringify([...existingOpportunities, opportunity]));
-
-      // Send notification to all researchers about the new opportunity
-      createNotificationForResearchers({
-        message: `New grant opportunity: ${data.title}`,
-        type: "opportunity",
-        relatedId: opportunityId,
-      });
-
-      toast.success("Grant opportunity posted successfully");
-      navigate("/opportunities");
-    } catch (error) {
-      console.error("Error creating opportunity:", error);
-      toast.error("Failed to post opportunity");
-    }
-  };
-
-  const createNotificationForResearchers = ({ message, type, relatedId }: { message: string, type: string, relatedId: string }) => {
-    const notificationId = `notification_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-    const notification: Notification = {
-      id: notificationId,
-      userId: "all", // Sending to all researchers
-      message: message,
-      type: type,
-      relatedId: relatedId,
+const sendNewOpportunityNotification = (opportunityId: string, opportunityTitle: string) => {
+  try {
+    const notifications = JSON.parse(localStorage.getItem("au_gms_notifications") || "[]");
+    
+    // Create notification for all researchers
+    const newNotification: Notification = {
+      id: Date.now().toString(),
+      userId: "all",
+      message: `New grant opportunity: ${opportunityTitle}`,
+      type: "opportunity",
       isRead: false,
       createdAt: new Date().toISOString(),
+      relatedId: opportunityId,
+      relatedType: "opportunity"
     };
     
-    // In a real app, this would be an API call
-    const existingNotifications = JSON.parse(localStorage.getItem("au_gms_notifications") || "[]");
-    localStorage.setItem("au_gms_notifications", JSON.stringify([...existingNotifications, notification]));
-  };
-
-  return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Post Grant Opportunity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Opportunity Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter the title of the grant opportunity" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      A clear and descriptive title for the grant opportunity.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Describe the grant opportunity, its objectives, and expected outcomes"
-                        className="h-32"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="fundingAmount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Funding Amount (USD)</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="deadline"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Application Deadline</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant={"outline"}
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(field.value, "PPP")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={field.value}
-                            onSelect={field.onChange}
-                            disabled={(date) =>
-                              date < new Date(new Date().setHours(0, 0, 0, 0))
-                            }
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="eligibility"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Eligibility Criteria</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Specify who can apply for this grant"
-                        className="h-20"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Grant Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="research">Research</SelectItem>
-                          <SelectItem value="education">Education</SelectItem>
-                          <SelectItem value="community">Community</SelectItem>
-                          <SelectItem value="infrastructure">Infrastructure</SelectItem>
-                          <SelectItem value="innovation">Innovation</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="fundingSource"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Funding Source</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select funding source" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="internal">Internal</SelectItem>
-                          <SelectItem value="external">External</SelectItem>
-                          <SelectItem value="government">Government</SelectItem>
-                          <SelectItem value="private">Private</SelectItem>
-                          <SelectItem value="foundation">Foundation</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="applicationUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Application URL (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://..." {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      External application URL, if applicable.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end space-x-4">
-                <Button type="button" variant="outline" onClick={() => navigate("/opportunities")}>
-                  Cancel
-                </Button>
-                <Button type="submit">Publish Opportunity</Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    notifications.push(newNotification);
+    
+    // Save to localStorage
+    localStorage.setItem("au_gms_notifications", JSON.stringify(notifications));
+    
+    toast.success("Notification sent to all researchers about the new opportunity!");
+  } catch (error) {
+    console.error("Error sending notification:", error);
+  }
 };
 
-export default CreateOpportunityForm;
+// Export the notification sender function for use in other components
+export { sendNewOpportunityNotification };

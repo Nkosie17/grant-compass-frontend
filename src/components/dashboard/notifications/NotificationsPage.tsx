@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bell, Calendar, Check, CheckCheck, Filter, MessageSquare, Search } from "lucide-react";
 import { Notification } from "@/types/grants";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +13,7 @@ import SendNotificationForm from "./SendNotificationForm";
 
 const NotificationsPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,6 +65,31 @@ const NotificationsPage: React.FC = () => {
     localStorage.setItem("au_gms_notifications", JSON.stringify(updatedAllNotifications));
   };
 
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read
+    markAsRead(notification.id);
+
+    // Navigate based on notification type and related content
+    if (notification.relatedType && notification.relatedId) {
+      switch (notification.relatedType) {
+        case "grant":
+          navigate(`/my-grants/${notification.relatedId}`);
+          break;
+        case "report":
+          navigate(`/reports/${notification.relatedId}`);
+          break;
+        case "opportunity":
+          navigate(`/opportunities/${notification.relatedId}`);
+          break;
+        case "event":
+          navigate(`/calendar`);
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
   const getFilteredNotifications = () => {
     let filtered = notifications;
     
@@ -112,6 +137,10 @@ const NotificationsPage: React.FC = () => {
         return "Status Update";
       case "opportunity":
         return "New Opportunity";
+      case "grant_response":
+        return "Grant Application Update";
+      case "ip_update":
+        return "IP Update";
       default:
         return "Notification";
     }
@@ -211,7 +240,8 @@ const NotificationsPage: React.FC = () => {
                   key={notification.id}
                   className={`p-4 rounded-lg border ${
                     !notification.isRead ? "bg-blue-50 border-blue-200" : "bg-white"
-                  }`}
+                  } ${notification.relatedId ? "cursor-pointer hover:bg-gray-50" : ""}`}
+                  onClick={() => notification.relatedId ? handleNotificationClick(notification) : null}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex gap-3">
@@ -233,11 +263,17 @@ const NotificationsPage: React.FC = () => {
                             <span className="ml-1">{getNotificationTypeText(notification.type)}</span>
                           </span>
                           <span>{new Date(notification.createdAt).toLocaleDateString()}</span>
+                          {notification.relatedId && (
+                            <span className="text-blue-600 underline">View details</span>
+                          )}
                         </div>
                       </div>
                     </div>
                     {!notification.isRead && (
-                      <Button variant="ghost" size="sm" onClick={() => markAsRead(notification.id)}>
+                      <Button variant="ghost" size="sm" onClick={(e) => {
+                        e.stopPropagation();
+                        markAsRead(notification.id);
+                      }}>
                         Mark as read
                       </Button>
                     )}

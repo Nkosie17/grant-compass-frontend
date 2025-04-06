@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { User } from "@/types/auth";
-import { Notification } from "@/types/grants";
+import { NotificationType, Notification } from "@/types/grants";
+import { ALL_GRANTS } from "@/data/mockData";
 
 interface SendNotificationFormProps {
   onSuccess: () => void;
@@ -16,11 +17,14 @@ interface SendNotificationFormProps {
 
 const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }) => {
   const [message, setMessage] = useState("");
-  const [notificationType, setNotificationType] = useState<Notification["type"]>("status_update");
+  const [notificationType, setNotificationType] = useState<NotificationType>("status_update");
   const [recipientType, setRecipientType] = useState("all");
   const [selectedUser, setSelectedUser] = useState("");
+  const [relatedItemType, setRelatedItemType] = useState<"none" | "grant" | "report" | "opportunity" | "event">("none");
+  const [relatedItemId, setRelatedItemId] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dueDateValue, setDueDateValue] = useState("");
 
   useEffect(() => {
     // Fetch users from localStorage (in a real app, this would be an API call)
@@ -45,15 +49,25 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
     try {
       const notifications = JSON.parse(localStorage.getItem("au_gms_notifications") || "[]");
       
+      const baseNotification: Partial<Notification> = {
+        message,
+        type: notificationType,
+        isRead: false,
+        createdAt: new Date().toISOString()
+      };
+
+      // Add related item if selected
+      if (relatedItemType !== "none" && relatedItemId) {
+        baseNotification.relatedType = relatedItemType;
+        baseNotification.relatedId = relatedItemId;
+      }
+
       if (recipientType === "all") {
         // Send to all researchers
         const newNotification: Notification = {
           id: Date.now().toString(),
           userId: "all",
-          message,
-          type: notificationType,
-          isRead: false,
-          createdAt: new Date().toISOString()
+          ...baseNotification as Omit<Notification, "id" | "userId">
         };
         
         notifications.push(newNotification);
@@ -62,10 +76,7 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
         const newNotification: Notification = {
           id: Date.now().toString(),
           userId: selectedUser,
-          message,
-          type: notificationType,
-          isRead: false,
-          createdAt: new Date().toISOString()
+          ...baseNotification as Omit<Notification, "id" | "userId">
         };
         
         notifications.push(newNotification);
@@ -125,7 +136,7 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
       
       <div className="space-y-2">
         <Label htmlFor="type">Notification Type</Label>
-        <Select value={notificationType} onValueChange={(value: any) => setNotificationType(value)}>
+        <Select value={notificationType} onValueChange={(value) => setNotificationType(value as NotificationType)}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -134,9 +145,57 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
             <SelectItem value="due_date">Deadline Reminder</SelectItem>
             <SelectItem value="report_submission">Report Submission</SelectItem>
             <SelectItem value="opportunity">New Opportunity</SelectItem>
+            <SelectItem value="grant_response">Grant Application Update</SelectItem>
+            <SelectItem value="ip_update">IP Update</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {notificationType === "due_date" && (
+        <div className="space-y-2">
+          <Label htmlFor="dueDate">Due Date</Label>
+          <Input 
+            type="date"
+            id="dueDate"
+            value={dueDateValue}
+            onChange={(e) => setDueDateValue(e.target.value)}
+          />
+        </div>
+      )}
+      
+      <div className="space-y-2">
+        <Label htmlFor="relatedItem">Related To (Optional)</Label>
+        <Select value={relatedItemType} onValueChange={(value: "none" | "grant" | "report" | "opportunity" | "event") => setRelatedItemType(value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select related item type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">None</SelectItem>
+            <SelectItem value="grant">Grant</SelectItem>
+            <SelectItem value="report">Report</SelectItem>
+            <SelectItem value="opportunity">Opportunity</SelectItem>
+            <SelectItem value="event">Calendar Event</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {relatedItemType === "grant" && (
+        <div className="space-y-2">
+          <Label htmlFor="relatedItemId">Select Grant</Label>
+          <Select value={relatedItemId} onValueChange={setRelatedItemId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a grant" />
+            </SelectTrigger>
+            <SelectContent>
+              {ALL_GRANTS.map((grant) => (
+                <SelectItem key={grant.id} value={grant.id}>
+                  {grant.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       
       <div className="space-y-2">
         <Label htmlFor="message">Message</Label>
