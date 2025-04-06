@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,8 +20,8 @@ const IPForm: React.FC<IPFormProps> = ({ onSubmit, onCancel }) => {
     filingDate: new Date().toISOString().split("T")[0],
     grantId: "",
     researchers: "",
-    description: "",
-    status: "pending"
+    status: "pending",
+    description: ""
   });
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

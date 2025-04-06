@@ -101,4 +101,5 @@ export interface IPItem {
   grantId: string;
   researchers: string[];
   status: string;
+  description?: string; // Added description field
 }

@@ -25,7 +25,8 @@ const MOCK_IP_ITEMS: IPItem[] = [
     filingDate: "2023-05-15",
     grantId: "grant123",
     researchers: ["John Doe", "Jane Smith"],
-    status: "registered"
+    status: "registered",
+    description: "A novel approach to sustainable agriculture using AI-driven irrigation systems."
   },
   {
     id: "ip2",
@@ -35,7 +36,8 @@ const MOCK_IP_ITEMS: IPItem[] = [
     filingDate: "2023-02-10",
     grantId: "grant456",
     researchers: ["Alice Johnson"],
-    status: "registered"
+    status: "registered",
+    description: "Comprehensive handbook detailing research methodologies for academic studies."
   },
   {
     id: "ip3",
@@ -45,7 +47,8 @@ const MOCK_IP_ITEMS: IPItem[] = [
     filingDate: "2023-07-22",
     grantId: "grant789",
     researchers: ["Robert Brown", "Sarah Davis"],
-    status: "pending"
+    status: "pending",
+    description: "Analytics platform for tracking and visualizing research outcomes."
   },
   {
     id: "ip4",
@@ -55,7 +58,8 @@ const MOCK_IP_ITEMS: IPItem[] = [
     filingDate: "2023-03-30",
     grantId: "grant123",
     researchers: ["Michael Wilson"],
-    status: "protected"
+    status: "protected",
+    description: "Proprietary water purification process using novel filtration technology."
   }
 ];
 
