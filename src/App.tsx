@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -54,15 +55,22 @@ const DashboardRouter = () => {
     return <Navigate to="/login" />;
   }
   
+  console.log("DashboardRouter - Current user role:", user.role);
+  console.log("DashboardRouter - User details:", user);
+  
   switch (user.role) {
     case "researcher":
+      console.log("Loading Researcher Dashboard");
       return <ResearcherDashboard />;
     case "grant_office":
+      console.log("Loading Grant Office Dashboard");
       return <GrantOfficeDashboard />;
     case "admin":
+      console.log("Loading Admin Dashboard");
       return <AdminDashboard />;
     default:
       // Fallback to researcher dashboard if role is unknown
+      console.log("Unknown role, defaulting to Researcher Dashboard");
       return <ResearcherDashboard />;
   }
 };

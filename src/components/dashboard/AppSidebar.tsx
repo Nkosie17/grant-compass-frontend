@@ -34,6 +34,9 @@ export const AppSidebar: React.FC = () => {
   
   if (!user) return null;
   
+  // Debug log for sidebar rendering
+  console.log("AppSidebar - User role:", user.role);
+  
   const isActiveRoute = (route: string) => {
     return location.pathname === route || location.pathname.startsWith(`${route}/`);
   };
@@ -66,87 +69,88 @@ export const AppSidebar: React.FC = () => {
       },
     ];
 
-    // Role-specific menu items
-    switch (user.role) {
-      case "researcher":
-        return [
-          ...baseItems,
-          {
-            name: "My Grants",
-            path: "/my-grants",
-            icon: <File className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "Find Opportunities",
-            path: "/opportunities",
-            icon: <Search className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "Reports",
-            path: "/reports",
-            icon: <FileText className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "Calendar",
-            path: "/calendar",
-            icon: <Calendar className="h-4 w-4 mr-2" />,
-          },
-        ];
-      case "grant_office":
-        return [
-          ...baseItems,
-          {
-            name: "Applications",
-            path: "/applications",
-            icon: <File className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "Reporting",
-            path: "/reporting",
-            icon: <BarChart2 className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "Financial Management",
-            path: "/finance",
-            icon: <FileText className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "Call-for-Proposals",
-            path: "/proposals",
-            icon: <Calendar className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "IP Management",
-            path: "/ip-management",
-            icon: <Award className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "Agreements",
-            path: "/agreements",
-            icon: <FileSignature className="h-4 w-4 mr-2" />,
-          },
-        ];
-      case "admin":
-        return [
-          ...baseItems,
-          {
-            name: "User Management",
-            path: "/users",
-            icon: <Users className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "System Reports",
-            path: "/system-reports",
-            icon: <BarChart2 className="h-4 w-4 mr-2" />,
-          },
-          {
-            name: "Admin Settings",
-            path: "/admin-settings",
-            icon: <Settings className="h-4 w-4 mr-2" />,
-          },
-        ];
-      default:
-        return baseItems;
+    // Explicitly check for exact role value to ensure proper menu items
+    if (user.role === "admin") {
+      console.log("Rendering admin menu items");
+      return [
+        ...baseItems,
+        {
+          name: "User Management",
+          path: "/users",
+          icon: <Users className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "System Reports",
+          path: "/system-reports",
+          icon: <BarChart2 className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "Admin Settings",
+          path: "/admin-settings",
+          icon: <Settings className="h-4 w-4 mr-2" />,
+        },
+      ];
+    } else if (user.role === "grant_office") {
+      console.log("Rendering grant office menu items");
+      return [
+        ...baseItems,
+        {
+          name: "Applications",
+          path: "/applications",
+          icon: <File className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "Reporting",
+          path: "/reporting",
+          icon: <BarChart2 className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "Financial Management",
+          path: "/finance",
+          icon: <FileText className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "Call-for-Proposals",
+          path: "/proposals",
+          icon: <Calendar className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "IP Management",
+          path: "/ip-management",
+          icon: <Award className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "Agreements",
+          path: "/agreements",
+          icon: <FileSignature className="h-4 w-4 mr-2" />,
+        },
+      ];
+    } else {
+      // Default to researcher role
+      console.log("Rendering researcher menu items");
+      return [
+        ...baseItems,
+        {
+          name: "My Grants",
+          path: "/my-grants",
+          icon: <File className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "Find Opportunities",
+          path: "/opportunities",
+          icon: <Search className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "Reports",
+          path: "/reports",
+          icon: <FileText className="h-4 w-4 mr-2" />,
+        },
+        {
+          name: "Calendar",
+          path: "/calendar",
+          icon: <Calendar className="h-4 w-4 mr-2" />,
+        },
+      ];
     }
   })();
 

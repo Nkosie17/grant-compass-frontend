@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { User, UserRole } from "@/types/auth";
 import { toast } from "sonner";
@@ -24,11 +23,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const basicUser = createBasicUserFromSession(session);
         setUser(basicUser);
         
+        // Force admin role for the admin email
+        if (session.user.email === 'admin@africau.edu') {
+          console.log("Admin user detected, setting admin role");
+          setUser(prev => prev ? {...prev, role: 'admin'} : null);
+        }
+        
         // Then fetch profile asynchronously using setTimeout to avoid potential deadlocks
         setTimeout(async () => {
           try {
             const profile = await fetchUserProfile(session.user.id);
             if (profile) {
+              // Ensure admin email always has admin role regardless of what's in the DB
+              if (session.user.email === 'admin@africau.edu') {
+                profile.role = 'admin';
+              }
               setUser(profile);
             }
           } catch (error) {
@@ -50,13 +59,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log("Found existing session for user:", session.user.id);
           
           // First set basic user info synchronously
-          setUser(createBasicUserFromSession(session));
+          const basicUser = createBasicUserFromSession(session);
+          
+          // Force admin role for the admin email
+          if (session.user.email === 'admin@africau.edu') {
+            console.log("Admin user detected, setting admin role");
+            basicUser.role = 'admin';
+          }
+          
+          setUser(basicUser);
           
           // Then fetch profile asynchronously
           try {
             const profile = await fetchUserProfile(session.user.id);
             if (profile) {
               console.log("User profile loaded:", profile);
+              // Ensure admin email always has admin role regardless of what's in the DB
+              if (session.user.email === 'admin@africau.edu') {
+                profile.role = 'admin';
+              }
               setUser(profile);
             }
           } catch (error) {
@@ -233,5 +254,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   console.log("AuthProvider rendering with auth state:", { user: !!user, isLoading });
+  console.log("Current user role:", user?.role);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
