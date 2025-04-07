@@ -166,31 +166,16 @@ const SetupPage: React.FC = () => {
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
             Already set up?{" "}
-            <Link to="/login" className="text-au-purple hover:underline">
+            <a 
+              onClick={(e) => { e.preventDefault(); navigate("/login"); }} 
+              className="text-au-purple hover:underline cursor-pointer"
+            >
               Sign in here
-            </Link>
+            </a>
           </p>
         </CardFooter>
       </Card>
     </div>
-  );
-};
-
-const Link: React.FC<{to: string, className?: string, children: React.ReactNode}> = ({ 
-  to, 
-  className = "", 
-  children 
-}) => {
-  const navigate = useNavigate();
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    navigate(to);
-  };
-  
-  return (
-    <a href={to} onClick={handleClick} className={className}>
-      {children}
-    </a>
   );
 };
 
