@@ -111,7 +111,7 @@ const UserManagementPage: React.FC = () => {
                 Create a new account for grant office staff or administrators.
               </DialogDescription>
             </DialogHeader>
-            <AddUserForm onUserAdded={() => {
+            <AddUserForm onSuccess={() => {
               setIsAddUserOpen(false);
               fetchUsers(); // Refresh the user list after adding a user
             }} />
