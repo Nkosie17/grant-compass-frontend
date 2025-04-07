@@ -31,17 +31,22 @@ const LoginForm: React.FC = () => {
     };
   }
   
-  const { login, isAuthenticated, isLoading } = auth;
+  const { login, isAuthenticated, isLoading, user } = auth;
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Debug console log to track auth state changes
   useEffect(() => {
-    console.log("LoginForm auth state:", { isAuthenticated, isLoading });
-    if (isAuthenticated && !isLoading) {
-      console.log("User is authenticated, redirecting to dashboard");
-      navigate("/dashboard");
+    console.log("LoginForm auth state changed:", { isAuthenticated, isLoading, user });
+    
+    if (isAuthenticated && !isLoading && user) {
+      console.log("User is authenticated, redirecting to dashboard", user);
+      // Small timeout to ensure state is fully updated
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 100);
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +56,16 @@ const LoginForm: React.FC = () => {
     try {
       console.log("Attempting login for:", email);
       await login(email, password);
-      console.log("Login attempt complete");
+      console.log("Login attempt complete, auth state:", { 
+        isAuthenticated: auth.isAuthenticated, 
+        isLoading: auth.isLoading,
+        user: auth.user
+      });
+      
+      // Manual navigation as a fallback
+      if (auth.isAuthenticated && auth.user) {
+        navigate("/dashboard");
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       setLoginError(error.message || "Login failed. Please check your credentials.");

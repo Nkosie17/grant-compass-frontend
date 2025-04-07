@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole } from "@/types/auth";
 import { toast } from "sonner";
@@ -34,10 +35,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .eq('id', session.user.id)
             .single();
 
-          if (error || !profile) {
+          if (error) {
             console.error("Error fetching user profile:", error);
-            setUser(null);
-          } else {
+            // Instead of setting user to null, create a basic user from session
+            setUser({
+              id: session.user.id,
+              name: session.user.user_metadata?.name || "User",
+              email: session.user.email || "",
+              role: (session.user.user_metadata?.role as UserRole) || "researcher",
+              profileImage: "/placeholder.svg"
+            });
+          } else if (profile) {
             setUser({
               id: profile.id,
               name: profile.name,
@@ -49,7 +57,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch (error) {
           console.error("Error handling auth state change:", error);
-          setUser(null);
+          // Same fallback as above, don't set user to null
+          setUser({
+            id: session.user.id,
+            name: session.user.user_metadata?.name || "User",
+            email: session.user.email || "",
+            role: (session.user.user_metadata?.role as UserRole) || "researcher",
+            profileImage: "/placeholder.svg"
+          });
         }
       } else {
         setUser(null);
@@ -63,24 +78,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session } } = await db.auth.getSession();
         if (session?.user) {
           console.log("Found existing session for user:", session.user.id);
-          const { data: profile, error } = await db
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          try {
+            const { data: profile, error } = await db
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
 
-          if (error || !profile) {
-            console.error("Error fetching user profile:", error);
-            setUser(null);
-          } else {
-            console.log("User profile loaded:", profile);
+            if (error) {
+              console.error("Error fetching user profile:", error);
+              // Instead of setting user to null, create a basic user from session
+              setUser({
+                id: session.user.id,
+                name: session.user.user_metadata?.name || "User",
+                email: session.user.email || "",
+                role: (session.user.user_metadata?.role as UserRole) || "researcher",
+                profileImage: "/placeholder.svg"
+              });
+            } else if (profile) {
+              console.log("User profile loaded:", profile);
+              setUser({
+                id: profile.id,
+                name: profile.name,
+                email: profile.email,
+                role: profile.role as UserRole,
+                department: profile.department || undefined,
+                profileImage: "/placeholder.svg" // Default image
+              });
+            }
+          } catch (error) {
+            console.error("Error initializing auth:", error);
+            // Fallback to session user data
             setUser({
-              id: profile.id,
-              name: profile.name,
-              email: profile.email,
-              role: profile.role as UserRole,
-              department: profile.department || undefined,
-              profileImage: "/placeholder.svg" // Default image
+              id: session.user.id,
+              name: session.user.user_metadata?.name || "User",
+              email: session.user.email || "",
+              role: (session.user.user_metadata?.role as UserRole) || "researcher",
+              profileImage: "/placeholder.svg"
             });
           }
         } else {
@@ -117,6 +151,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data?.user) {
         console.log("Login successful for:", data.user.email);
+        // Create a basic user object even if profile fetch fails
+        setUser({
+          id: data.user.id,
+          name: data.user.user_metadata?.name || "User",
+          email: data.user.email || "",
+          role: (data.user.user_metadata?.role as UserRole) || "researcher",
+          profileImage: "/placeholder.svg"
+        });
         toast.success("Login successful");
         return;
       }
