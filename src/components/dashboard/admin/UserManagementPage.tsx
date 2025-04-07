@@ -39,7 +39,7 @@ const UserManagementPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   
-  const { session } = useAuth();
+  const { user } = useAuth();
   
   useEffect(() => {
     fetchUsers();
@@ -89,13 +89,13 @@ const UserManagementPage: React.FC = () => {
       toast.error("Failed to load users. Using session data if available.");
       
       // Fallback to current user session if available
-      if (session?.user) {
+      if (user) {
         const userData: User = {
-          id: session.user.id,
-          name: session.user.user_metadata.name || 'Current User',
-          email: session.user.email || 'No Email',
-          role: session.user.user_metadata.role || 'researcher',
-          department: session.user.user_metadata.department || 'Unassigned',
+          id: user.id,
+          name: user.name || 'Current User',
+          email: user.email || 'No Email',
+          role: user.role || 'researcher',
+          department: user.department || 'Unassigned',
           status: 'active',
           lastLogin: 'Current session',
         };
