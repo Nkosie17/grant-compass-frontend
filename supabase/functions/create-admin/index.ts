@@ -25,25 +25,20 @@ export const serve = async (req: Request) => {
     // Create Supabase client with admin rights
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Parse the request body
-    const { email, password } = await req.json()
-
-    // Validate request data
-    if (!email || !password) {
-      return new Response(
-        JSON.stringify({ error: 'Email and password are required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
+    // Parse the request body or use default values
+    let email = 'admin@africau.edu'
+    let password = 'test1234'
+    
+    try {
+      const body = await req.json()
+      // If specific values are provided in the request, use them instead
+      if (body.email) email = body.email
+      if (body.password) password = body.password
+    } catch (err) {
+      // If parsing fails, just use the default values
+      console.log('Using default admin credentials')
     }
     
-    // Check if this is the allowed admin email
-    if (email !== 'admin@africau.edu') {
-      return new Response(
-        JSON.stringify({ error: 'Only the default admin email is allowed' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
-      )
-    }
-
     // Create the admin user with the auth API
     const { data: authUser, error: createUserError } = await supabase.auth.admin.createUser({
       email,

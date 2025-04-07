@@ -58,7 +58,7 @@ const RegisterForm: React.FC = () => {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Create an Account</CardTitle>
           <CardDescription className="text-center">
-            Register for a researcher account with the Grant Management System
+            Register for a Grant Management System account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -115,11 +115,6 @@ const RegisterForm: React.FC = () => {
                 required
                 disabled={isSubmitting}
               />
-            </div>
-            
-            <div className="p-2 rounded-lg bg-blue-50 text-blue-800 text-sm">
-              <p>You are registering as a <strong>Researcher</strong>. Only researchers can self-register.</p>
-              <p className="mt-1 text-xs">Grant Office Staff accounts are created by administrators.</p>
             </div>
             
             <Button
