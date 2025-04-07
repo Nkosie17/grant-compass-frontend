@@ -33,10 +33,12 @@ const LoginForm: React.FC = () => {
     try {
       await login(email, password);
       // Login success is handled by the useEffect above
+      console.log("Login attempt complete");
     } catch (error: any) {
-      console.error(error);
+      console.error("Login error:", error);
       setLoginError(error.message || "Login failed. Please check your credentials.");
     } finally {
+      // Make sure to reset the submitting state even if there's an error
       setIsSubmitting(false);
     }
   };

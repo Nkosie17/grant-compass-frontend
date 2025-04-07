@@ -106,11 +106,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error("Login error:", error.message);
         throw error;
       }
 
       if (data?.user) {
         // We don't need to set user here as it will be handled by the onAuthStateChange listener
+        console.log("Login successful for:", data.user.email);
         toast.success("Login successful");
         return;
       }
