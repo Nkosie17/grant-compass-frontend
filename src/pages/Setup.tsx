@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { db } from "@/integrations/supabase/typedClient";
+import { seedDatabase } from "@/utils/seedData";
 
 const SetupPage: React.FC = () => {
   const [password, setPassword] = useState("");
@@ -15,6 +16,7 @@ const SetupPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [adminExists, setAdminExists] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [seedingDatabase, setSeedingDatabase] = useState(false);
   const navigate = useNavigate();
 
   // Check if admin user exists
@@ -73,12 +75,23 @@ const SetupPage: React.FC = () => {
 
       toast.success("Admin account created successfully");
       toast.info("You can now log in with admin@africau.edu");
+      
+      // After creating admin, seed the database
+      setSeedingDatabase(true);
+      const seedResult = await seedDatabase();
+      if (seedResult) {
+        toast.success("Database seeded with sample data");
+      } else {
+        toast.error("Failed to seed database with sample data");
+      }
+      
       navigate("/login");
     } catch (error: any) {
       console.error("Error creating admin account:", error);
       toast.error(error.message || "Failed to create admin account");
     } finally {
       setIsSubmitting(false);
+      setSeedingDatabase(false);
     }
   };
 
@@ -157,9 +170,11 @@ const SetupPage: React.FC = () => {
             <Button
               type="submit"
               className="w-full bg-au-purple hover:bg-au-purple-dark"
-              disabled={isSubmitting}
+              disabled={isSubmitting || seedingDatabase}
             >
-              {isSubmitting ? "Creating Admin Account..." : "Create Admin Account"}
+              {isSubmitting ? "Creating Admin Account..." : 
+               seedingDatabase ? "Seeding Database..." : 
+               "Create Admin Account"}
             </Button>
           </form>
         </CardContent>
