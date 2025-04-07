@@ -2,6 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import LoginFormFields from "./LoginFormFields";
+import SSOButton from "./SSOButton";
 import LoginFooter from "./LoginFooter";
 import { useLoginForm } from "@/hooks/useLoginForm";
 
@@ -36,6 +37,21 @@ const LoginCard: React.FC = () => {
           locationMessage={locationMessage}
           onSubmit={handleSubmit}
         />
+        
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-au-neutral-300" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                or continue with
+              </span>
+            </div>
+          </div>
+          
+          <SSOButton isSubmitting={isSubmitting} />
+        </div>
       </CardContent>
       <LoginFooter />
     </Card>

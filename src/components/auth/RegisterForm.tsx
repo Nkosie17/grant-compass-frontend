@@ -8,14 +8,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserRole } from "@/types/auth";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const RegisterForm: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("researcher");
+  const [role] = useState<UserRole>("researcher");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -116,27 +115,6 @@ const RegisterForm: React.FC = () => {
                 required
                 disabled={isSubmitting}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <RadioGroup 
-                value={role} 
-                onValueChange={(value) => setRole(value as UserRole)}
-                className="flex flex-col space-y-1 mt-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="researcher" id="researcher" />
-                  <Label htmlFor="researcher" className="cursor-pointer">Researcher</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="grant_office" id="grant_office" />
-                  <Label htmlFor="grant_office" className="cursor-pointer">Grant Office</Label>
-                </div>
-              </RadioGroup>
-              <p className="text-xs text-muted-foreground">
-                Note: Staff accounts require admin approval
-              </p>
             </div>
             
             <Button
