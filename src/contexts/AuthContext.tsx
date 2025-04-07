@@ -11,41 +11,9 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
-  getDemoCredentials: () => { role: UserRole; email: string; password: string; name: string }[];
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Sample user data for demo purposes
-const DEMO_USERS = [
-  {
-    id: "1",
-    name: "John Researcher",
-    email: "researcher@africau.edu",
-    password: "password123",
-    role: "researcher" as UserRole,
-    department: "Computer Science",
-    profileImage: "/placeholder.svg"
-  },
-  {
-    id: "2",
-    name: "Sarah Grant Officer",
-    email: "grants@africau.edu",
-    password: "password123",
-    role: "grant_office" as UserRole,
-    department: "Research Administration",
-    profileImage: "/placeholder.svg"
-  },
-  {
-    id: "3",
-    name: "Admin User",
-    email: "admin@africau.edu",
-    password: "password123",
-    role: "admin" as UserRole,
-    department: "System Administration",
-    profileImage: "/placeholder.svg"
-  }
-];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -203,24 +171,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Function to get demo credentials for display purposes
-  const getDemoCredentials = () => {
-    return DEMO_USERS.map(user => ({
-      role: user.role,
-      email: user.email,
-      password: user.password,
-      name: user.name
-    }));
-  };
-
   const value = {
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
     logout,
-    register,
-    getDemoCredentials
+    register
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
