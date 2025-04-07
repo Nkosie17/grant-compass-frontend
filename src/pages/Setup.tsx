@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/supabase/typedClient";
 
 const SetupPage: React.FC = () => {
   const [password, setPassword] = useState("");
@@ -21,7 +21,7 @@ const SetupPage: React.FC = () => {
   useEffect(() => {
     const checkAdminUser = async () => {
       try {
-        const { count, error } = await supabase
+        const { count, error } = await db
           .from('profiles')
           .select('*', { count: 'exact', head: true })
           .eq('role', 'admin');
@@ -74,7 +74,7 @@ const SetupPage: React.FC = () => {
       toast.success("Admin account created successfully");
       toast.info("You can now log in with admin@africau.edu");
       navigate("/login");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating admin account:", error);
       toast.error(error.message || "Failed to create admin account");
     } finally {

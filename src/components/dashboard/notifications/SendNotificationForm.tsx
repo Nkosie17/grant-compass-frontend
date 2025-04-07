@@ -9,8 +9,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { User } from "@/types/auth";
 import { NotificationType } from "@/types/grants";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { db } from "@/integrations/supabase/typedClient";
 
 interface SendNotificationFormProps {
   onSuccess: () => void;
@@ -34,7 +34,7 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
     const fetchData = async () => {
       try {
         // Fetch researchers
-        const { data: profilesData, error: profilesError } = await supabase
+        const { data: profilesData, error: profilesError } = await db
           .from('profiles')
           .select('*')
           .eq('role', 'researcher');
@@ -46,14 +46,14 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
           id: profile.id,
           name: profile.name,
           email: profile.email,
-          role: profile.role,
-          department: profile.department
+          role: profile.role as any,
+          department: profile.department || undefined
         }));
         
         setUsers(researchers);
 
         // Fetch grants
-        const { data: grantsData, error: grantsError } = await supabase
+        const { data: grantsData, error: grantsError } = await db
           .from('grants')
           .select('id, title');
 
@@ -92,7 +92,7 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
 
       if (recipientType === "all") {
         // Send to all researchers - insert multiple notifications
-        const { error: fetchError } = await supabase
+        const { error: fetchError } = await db
           .from('profiles')
           .select('id')
           .eq('role', 'researcher');
@@ -101,7 +101,7 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
 
         // For each researcher, insert a notification
         for (const user of users) {
-          const { error } = await supabase
+          const { error } = await db
             .from('notifications')
             .insert({
               ...notificationData,
@@ -112,7 +112,7 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
         }
       } else {
         // Send to specific user
-        const { error } = await supabase
+        const { error } = await db
           .from('notifications')
           .insert({
             ...notificationData,

@@ -3,7 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import React from "react";
 
 // Landing and Authentication Pages
 import LandingPage from "@/components/LandingPage";
@@ -44,6 +45,23 @@ import IntellectualPropertyPage from "@/components/dashboard/ip/IntellectualProp
 import AgreementsPage from "@/components/dashboard/agreements/AgreementsPage";
 
 const queryClient = new QueryClient();
+
+// Role-based dashboard router
+const DashboardRouter: React.FC = () => {
+  const { user } = useAuth();
+  
+  switch (user?.role) {
+    case "researcher":
+      return <ResearcherDashboard />;
+    case "grant_office":
+      return <GrantOfficeDashboard />;
+    case "admin":
+      return <AdminDashboard />;
+    default:
+      // Fallback to researcher dashboard if role is unknown
+      return <ResearcherDashboard />;
+  }
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -193,28 +211,5 @@ const App = () => (
     </AuthProvider>
   </QueryClientProvider>
 );
-
-// Role-based dashboard router
-const DashboardRouter = () => {
-  // Use the AuthContext to get the current user's role instead of localStorage
-  const { user } = useAuth();
-  
-  // Import the useAuth hook
-  const useAuth = () => {
-    return React.useContext(React.createContext<any>({}));
-  };
-  
-  switch (user?.role) {
-    case "researcher":
-      return <ResearcherDashboard />;
-    case "grant_office":
-      return <GrantOfficeDashboard />;
-    case "admin":
-      return <AdminDashboard />;
-    default:
-      // Fallback to researcher dashboard if role is unknown
-      return <ResearcherDashboard />;
-  }
-};
 
 export default App;

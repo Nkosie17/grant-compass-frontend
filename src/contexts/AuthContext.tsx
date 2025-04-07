@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole } from "@/types/auth";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { db } from "@/integrations/supabase/typedClient";
 
 type AuthContextType = {
   user: User | null;
@@ -54,11 +54,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Initialize auth state from Supabase session
   useEffect(() => {
     // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         try {
           // Fetch user profile from our profiles table
-          const { data: profile, error } = await supabase
+          const { data: profile, error } = await db
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
@@ -72,8 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               id: profile.id,
               name: profile.name,
               email: profile.email,
-              role: profile.role,
-              department: profile.department,
+              role: profile.role as UserRole,
+              department: profile.department || undefined,
               profileImage: "/placeholder.svg" // Default image
             });
           }
@@ -90,10 +90,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // THEN check for existing session
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await db.auth.getSession();
         if (session?.user) {
           // Fetch user profile
-          const { data: profile, error } = await supabase
+          const { data: profile, error } = await db
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
@@ -107,8 +107,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               id: profile.id,
               name: profile.name,
               email: profile.email,
-              role: profile.role,
-              department: profile.department,
+              role: profile.role as UserRole,
+              department: profile.department || undefined,
               profileImage: "/placeholder.svg" // Default image
             });
           }
@@ -130,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await db.auth.signInWithPassword({
         email,
         password,
       });
@@ -152,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      await db.auth.signOut();
       // Auth state changes are handled by onAuthStateChange
     } catch (error) {
       console.error("Logout failed:", error);
@@ -172,7 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error("Please use your Africa University email (@africau.edu)");
       }
       
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await db.auth.signUp({
         email,
         password,
         options: {

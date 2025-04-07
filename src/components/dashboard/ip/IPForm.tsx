@@ -7,9 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { IPItem, IPType } from "@/types/grants";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { db } from "@/integrations/supabase/typedClient";
 
 interface IPFormProps {
   onSubmit: (data: Omit<IPItem, "id">) => void;
@@ -48,7 +48,7 @@ const IPForm: React.FC<IPFormProps> = ({ onSubmit, onCancel }) => {
       const researchersArray = formData.researchers.split(",").map(r => r.trim());
       
       // Save to Supabase
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('intellectual_property')
         .insert({
           title: formData.title,
