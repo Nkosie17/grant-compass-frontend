@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { User, UserRole } from "@/types/auth";
 import { toast } from "sonner";
@@ -136,6 +137,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("Registration attempt for:", email);
     setIsLoading(true);
     try {
+      // Admin can create both admin and grant_office roles
+      // Regular users can only self-register as researchers
       if (role !== "researcher" && (!user || user.role !== "admin")) {
         throw new Error("Only administrators can create staff accounts");
       }
