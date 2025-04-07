@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import React from "react";
 
 // Landing and Authentication Pages
@@ -46,11 +46,13 @@ import AgreementsPage from "@/components/dashboard/agreements/AgreementsPage";
 
 const queryClient = new QueryClient();
 
-// Role-based dashboard router
-const DashboardRouter: React.FC = () => {
-  const { user } = useAuth();
+// Role-based dashboard router - use DashboardRouter inside AuthProvider context
+const DashboardRouter = () => {
+  const { user } = React.lazy(() => import("@/contexts/AuthContext").then(module => ({ default: module.useAuth })))();
   
-  switch (user?.role) {
+  if (!user) return <Navigate to="/login" />;
+  
+  switch (user.role) {
     case "researcher":
       return <ResearcherDashboard />;
     case "grant_office":
@@ -65,11 +67,11 @@ const DashboardRouter: React.FC = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
@@ -206,9 +208,9 @@ const App = () => (
             {/* Catch-all 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+        </TooltipProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </QueryClientProvider>
 );
 

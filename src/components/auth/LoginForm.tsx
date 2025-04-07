@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,13 +13,30 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const { login, isAuthenticated, isLoading } = useAuth();
+  
+  let auth: ReturnType<typeof useAuth>;
+  try {
+    auth = useAuth();
+  } catch (error) {
+    console.error("Auth context error in LoginForm:", error);
+    auth = {
+      isAuthenticated: false,
+      isLoading: false,
+      user: null,
+      login: async () => { throw new Error("Auth not initialized"); },
+      logout: async () => { throw new Error("Auth not initialized"); },
+      register: async () => { throw new Error("Auth not initialized"); }
+    };
+  }
+  
+  const { login, isAuthenticated, isLoading } = auth;
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Redirect if already authenticated
   useEffect(() => {
+    console.log("LoginForm auth state:", { isAuthenticated, isLoading });
     if (isAuthenticated && !isLoading) {
+      console.log("User is authenticated, redirecting to dashboard");
       navigate("/dashboard");
     }
   }, [isAuthenticated, isLoading, navigate]);
@@ -31,14 +47,13 @@ const LoginForm: React.FC = () => {
     setLoginError(null);
 
     try {
+      console.log("Attempting login for:", email);
       await login(email, password);
-      // Login success is handled by the useEffect above
       console.log("Login attempt complete");
     } catch (error: any) {
       console.error("Login error:", error);
       setLoginError(error.message || "Login failed. Please check your credentials.");
     } finally {
-      // Make sure to reset the submitting state even if there's an error
       setIsSubmitting(false);
     }
   };

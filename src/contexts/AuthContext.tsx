@@ -13,14 +13,19 @@ type AuthContextType = {
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
 };
 
+// Create the context with a default undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  console.log("AuthProvider initialized");
 
   // Initialize auth state from Supabase session
   useEffect(() => {
+    console.log("AuthProvider useEffect running");
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
@@ -59,8 +64,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // THEN check for existing session
     const initializeAuth = async () => {
       try {
+        console.log("Checking for existing session");
         const { data: { session } } = await db.auth.getSession();
         if (session?.user) {
+          console.log("Found existing session for user:", session.user.id);
           // Fetch user profile
           const { data: profile, error } = await db
             .from('profiles')
@@ -82,6 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               profileImage: "/placeholder.svg" // Default image
             });
           }
+        } else {
+          console.log("No existing session found");
         }
         setIsLoading(false);
       } catch (error) {
@@ -93,11 +102,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
 
     return () => {
+      console.log("Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, []);
 
   const login = async (email: string, password: string) => {
+    console.log("Login attempt for:", email);
     setIsLoading(true);
     try {
       const { data, error } = await db.auth.signInWithPassword({
@@ -128,6 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    console.log("Logout attempt");
+    setIsLoading(true);
     try {
       await db.auth.signOut();
       // Auth state changes are handled by onAuthStateChange
@@ -135,10 +148,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Failed to log out");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const register = async (name: string, email: string, password: string, role: UserRole) => {
+    console.log("Registration attempt for:", email);
     setIsLoading(true);
     try {
       // For admin and grant_office roles, only admins should be able to create
@@ -191,9 +207,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     register
   };
 
+  console.log("AuthProvider rendering with auth state:", { user: !!user, isLoading });
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// Updated useAuth hook with better error handling
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
