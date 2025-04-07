@@ -10,6 +10,7 @@ import LandingPage from "@/components/LandingPage";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
 import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
+import SetupPage from "@/pages/Setup";
 
 // Dashboard Components
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/login" element={<LoginForm />} />
             <Route path="/register" element={<RegisterForm />} />
             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+            <Route path="/setup" element={<SetupPage />} />
             
             {/* Protected Routes */}
             <Route path="/dashboard" element={
@@ -194,24 +196,25 @@ const App = () => (
 
 // Role-based dashboard router
 const DashboardRouter = () => {
-  const DashboardComponent = () => {
-    const role = localStorage.getItem("au_gms_user") ? 
-      JSON.parse(localStorage.getItem("au_gms_user")!).role : null;
-    
-    switch (role) {
-      case "researcher":
-        return <ResearcherDashboard />;
-      case "grant_office":
-        return <GrantOfficeDashboard />;
-      case "admin":
-        return <AdminDashboard />;
-      default:
-        // Fallback to researcher dashboard if role is unknown
-        return <ResearcherDashboard />;
-    }
+  // Use the AuthContext to get the current user's role instead of localStorage
+  const { user } = useAuth();
+  
+  // Import the useAuth hook
+  const useAuth = () => {
+    return React.useContext(React.createContext<any>({}));
   };
   
-  return <DashboardComponent />;
+  switch (user?.role) {
+    case "researcher":
+      return <ResearcherDashboard />;
+    case "grant_office":
+      return <GrantOfficeDashboard />;
+    case "admin":
+      return <AdminDashboard />;
+    default:
+      // Fallback to researcher dashboard if role is unknown
+      return <ResearcherDashboard />;
+  }
 };
 
 export default App;

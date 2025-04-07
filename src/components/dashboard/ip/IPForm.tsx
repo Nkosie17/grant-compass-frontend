@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { IPItem, IPType } from "@/types/grants";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface IPFormProps {
   onSubmit: (data: Omit<IPItem, "id">) => void;
@@ -13,16 +17,19 @@ interface IPFormProps {
 }
 
 const IPForm: React.FC<IPFormProps> = ({ onSubmit, onCancel }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Omit<IPItem, "id" | "researchers"> & { researchers: string }>({
     title: "",
     type: "patent" as IPType,
     registrationNumber: "",
     filingDate: new Date().toISOString().split("T")[0],
     grantId: "",
-    researchers: "",
+    researchers: user ? user.name : "",
     status: "pending",
     description: ""
   });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -33,12 +40,43 @@ const IPForm: React.FC<IPFormProps> = ({ onSubmit, onCancel }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      researchers: formData.researchers.split(",").map(r => r.trim())
-    });
+    setIsSubmitting(true);
+    
+    try {
+      const researchersArray = formData.researchers.split(",").map(r => r.trim());
+      
+      // Save to Supabase
+      const { data, error } = await supabase
+        .from('intellectual_property')
+        .insert({
+          title: formData.title,
+          type: formData.type,
+          registration_number: formData.registrationNumber,
+          filing_date: formData.filingDate,
+          grant_id: formData.grantId,
+          researchers: researchersArray,
+          status: formData.status,
+          description: formData.description
+        })
+        .select();
+        
+      if (error) throw error;
+      
+      toast.success("IP asset saved successfully");
+      
+      // Call the parent's onSubmit with the data
+      onSubmit({
+        ...formData,
+        researchers: researchersArray
+      });
+    } catch (error) {
+      console.error("Error saving IP asset:", error);
+      toast.error("Failed to save IP asset");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -156,8 +194,10 @@ const IPForm: React.FC<IPFormProps> = ({ onSubmit, onCancel }) => {
         </div>
         
         <div className="flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button type="submit">Save IP Asset</Button>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save IP Asset"}
+          </Button>
         </div>
       </form>
     </Card>

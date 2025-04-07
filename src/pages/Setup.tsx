@@ -1,0 +1,197 @@
+
+import React, { useState, useEffect } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+const SetupPage: React.FC = () => {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminExists, setAdminExists] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Check if admin user exists
+  useEffect(() => {
+    const checkAdminUser = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'admin');
+
+        if (error) {
+          throw error;
+        }
+
+        setAdminExists(count ? count > 0 : false);
+      } catch (error) {
+        console.error("Error checking admin user:", error);
+        toast.error("Failed to check system status");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAdminUser();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
+    
+    setIsSubmitting(true);
+
+    try {
+      // Call the create-admin edge function
+      const response = await fetch("https://jdsmyhemzlaccwptgpda.supabase.co/functions/v1/create-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "admin@africau.edu",
+          password
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create admin user");
+      }
+
+      toast.success("Admin account created successfully");
+      toast.info("You can now log in with admin@africau.edu");
+      navigate("/login");
+    } catch (error) {
+      console.error("Error creating admin account:", error);
+      toast.error(error.message || "Failed to create admin account");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-au-purple"></div>
+      </div>
+    );
+  }
+
+  // If admin already exists, redirect to home
+  if (adminExists) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-au-neutral-100 p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">System Setup</CardTitle>
+          <CardDescription className="text-center">
+            Create your administrator account to get started
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert className="mb-6 bg-yellow-50 border-yellow-200">
+            <AlertTitle>Initial Setup Required</AlertTitle>
+            <AlertDescription>
+              This is a one-time setup to create the administrator account for the Africa University Grant Management System.
+            </AlertDescription>
+          </Alert>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Admin Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value="admin@africau.edu"
+                disabled
+                className="bg-muted"
+              />
+              <p className="text-xs text-muted-foreground">
+                This is the fixed admin email for the system
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password">Admin Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Choose a secure password for the admin account
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
+            
+            <Button
+              type="submit"
+              className="w-full bg-au-purple hover:bg-au-purple-dark"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating Admin Account..." : "Create Admin Account"}
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-muted-foreground">
+            Already set up?{" "}
+            <Link to="/login" className="text-au-purple hover:underline">
+              Sign in here
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+};
+
+const Link: React.FC<{to: string, className?: string, children: React.ReactNode}> = ({ 
+  to, 
+  className = "", 
+  children 
+}) => {
+  const navigate = useNavigate();
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate(to);
+  };
+  
+  return (
+    <a href={to} onClick={handleClick} className={className}>
+      {children}
+    </a>
+  );
+};
+
+export default SetupPage;

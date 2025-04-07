@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { UserRole } from "@/types/auth";
 
 const RegisterForm: React.FC = () => {
@@ -25,6 +24,11 @@ const RegisterForm: React.FC = () => {
     
     if (password !== confirmPassword) {
       toast.error("Passwords don't match");
+      return;
+    }
+
+    if (!email.endsWith('@africau.edu')) {
+      toast.error("Please use your Africa University email (@africau.edu)");
       return;
     }
     
@@ -69,7 +73,7 @@ const RegisterForm: React.FC = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="your.email@au.edu"
+                placeholder="your.email@africau.edu"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

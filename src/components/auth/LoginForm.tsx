@@ -32,10 +32,9 @@ const LoginForm: React.FC = () => {
 
     try {
       await login(email, password);
-      toast.success("Login successful");
       navigate("/dashboard");
     } catch (error) {
-      toast.error("Login failed. Please check your credentials.");
+      // Error is already handled in the login function
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -49,10 +48,9 @@ const LoginForm: React.FC = () => {
     try {
       setIsSubmitting(true);
       await login(demoEmail, demoPassword);
-      toast.success("Demo login successful");
       navigate("/dashboard");
     } catch (error) {
-      toast.error("Demo login failed");
+      // Error is already handled in the login function
       console.error(error);
     } finally {
       setIsSubmitting(false);
@@ -82,7 +80,7 @@ const LoginForm: React.FC = () => {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="your.email@au.edu"
+                    placeholder="your.email@africau.edu"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required

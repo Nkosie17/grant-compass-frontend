@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { 
   Table, 
   TableBody, 
@@ -10,12 +10,57 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { IPItem, IPType } from "@/types/grants";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface IPTableProps {
-  items: IPItem[];
+  items?: IPItem[];
+  refresh?: number; // Add a refresh trigger
 }
 
-const IPTable: React.FC<IPTableProps> = ({ items }) => {
+const IPTable: React.FC<IPTableProps> = ({ items: propItems, refresh }) => {
+  const [items, setItems] = useState<IPItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch IP items from Supabase
+  useEffect(() => {
+    const fetchIPItems = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('intellectual_property')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        // Transform data to match the IPItem interface
+        const transformedData: IPItem[] = data.map(item => ({
+          id: item.id,
+          title: item.title,
+          type: item.type as IPType,
+          registrationNumber: item.registration_number,
+          filingDate: new Date(item.filing_date).toISOString().split('T')[0],
+          grantId: item.grant_id,
+          researchers: item.researchers,
+          status: item.status,
+          description: item.description
+        }));
+
+        setItems(transformedData);
+      } catch (error) {
+        console.error("Error fetching IP items:", error);
+        toast.error("Failed to load intellectual property items");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIPItems();
+  }, [refresh]); // Re-fetch when refresh changes
+
   const getTypeLabel = (type: IPType) => {
     switch (type) {
       case "patent": return "Patent";
@@ -41,6 +86,17 @@ const IPTable: React.FC<IPTableProps> = ({ items }) => {
     }
   };
   
+  // Use items from props if provided, otherwise use items from state
+  const displayItems = propItems || items;
+  
+  if (loading && !propItems) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-au-purple"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -54,8 +110,8 @@ const IPTable: React.FC<IPTableProps> = ({ items }) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.length > 0 ? (
-            items.map((item) => (
+          {displayItems.length > 0 ? (
+            displayItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.title}</TableCell>
                 <TableCell>{getTypeLabel(item.type)}</TableCell>

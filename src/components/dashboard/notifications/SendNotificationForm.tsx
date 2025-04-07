@@ -8,14 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { User } from "@/types/auth";
-import { NotificationType, Notification } from "@/types/grants";
-import { ALL_GRANTS } from "@/data/mockData";
+import { NotificationType } from "@/types/grants";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SendNotificationFormProps {
   onSuccess: () => void;
 }
 
 const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }) => {
+  const { user } = useAuth();
   const [message, setMessage] = useState("");
   const [notificationType, setNotificationType] = useState<NotificationType>("status_update");
   const [recipientType, setRecipientType] = useState("all");
@@ -25,65 +27,100 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
   const [users, setUsers] = useState<User[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dueDateValue, setDueDateValue] = useState("");
+  const [grants, setGrants] = useState<any[]>([]);
 
   useEffect(() => {
-    // Fetch users from localStorage (in a real app, this would be an API call)
-    const fetchUsers = () => {
+    // Fetch users and grants from Supabase
+    const fetchData = async () => {
       try {
-        const storedUsers = JSON.parse(localStorage.getItem("au_gms_users") || "[]");
-        // Only show researchers for notifications
-        const researchers = storedUsers.filter((user: User) => user.role === "researcher");
+        // Fetch researchers
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('role', 'researcher');
+        
+        if (profilesError) throw profilesError;
+
+        // Transform profiles to User type
+        const researchers = profilesData.map(profile => ({
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          role: profile.role,
+          department: profile.department
+        }));
+        
         setUsers(researchers);
+
+        // Fetch grants
+        const { data: grantsData, error: grantsError } = await supabase
+          .from('grants')
+          .select('id, title');
+
+        if (grantsError) throw grantsError;
+        setGrants(grantsData);
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load necessary data");
       }
     };
 
-    fetchUsers();
+    fetchData();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const notifications = JSON.parse(localStorage.getItem("au_gms_notifications") || "[]");
-      
-      const baseNotification: Partial<Notification> = {
+      if (!user) {
+        throw new Error("You must be logged in to send notifications");
+      }
+
+      // Base notification data
+      const notificationData: any = {
         message,
         type: notificationType,
-        isRead: false,
-        createdAt: new Date().toISOString()
+        is_read: false
       };
 
       // Add related item if selected
       if (relatedItemType !== "none" && relatedItemId) {
-        baseNotification.relatedType = relatedItemType;
-        baseNotification.relatedId = relatedItemId;
+        notificationData.related_id = relatedItemId;
+        notificationData.related_type = relatedItemType;
       }
 
       if (recipientType === "all") {
-        // Send to all researchers
-        const newNotification: Notification = {
-          id: Date.now().toString(),
-          userId: "all",
-          ...baseNotification as Omit<Notification, "id" | "userId">
-        };
-        
-        notifications.push(newNotification);
+        // Send to all researchers - insert multiple notifications
+        const { error: fetchError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'researcher');
+
+        if (fetchError) throw fetchError;
+
+        // For each researcher, insert a notification
+        for (const user of users) {
+          const { error } = await supabase
+            .from('notifications')
+            .insert({
+              ...notificationData,
+              user_id: user.id
+            });
+          
+          if (error) throw error;
+        }
       } else {
         // Send to specific user
-        const newNotification: Notification = {
-          id: Date.now().toString(),
-          userId: selectedUser,
-          ...baseNotification as Omit<Notification, "id" | "userId">
-        };
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            ...notificationData,
+            user_id: selectedUser
+          });
         
-        notifications.push(newNotification);
+        if (error) throw error;
       }
-      
-      // Save to localStorage
-      localStorage.setItem("au_gms_notifications", JSON.stringify(notifications));
       
       toast.success("Notification sent successfully!");
       setMessage("");
@@ -187,7 +224,7 @@ const SendNotificationForm: React.FC<SendNotificationFormProps> = ({ onSuccess }
               <SelectValue placeholder="Select a grant" />
             </SelectTrigger>
             <SelectContent>
-              {ALL_GRANTS.map((grant) => (
+              {grants.map((grant) => (
                 <SelectItem key={grant.id} value={grant.id}>
                   {grant.title}
                 </SelectItem>
