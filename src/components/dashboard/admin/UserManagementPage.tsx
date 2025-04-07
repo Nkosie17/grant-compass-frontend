@@ -11,6 +11,15 @@ import { Filter, Plus, Search, UserPlus, Users, X, Loader2 } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AddUserForm from "./AddUserForm";
+import { useAuth } from "@/contexts/auth/useAuth";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type User = {
   id: string;
@@ -30,6 +39,8 @@ const UserManagementPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   
+  const { session } = useAuth();
+  
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -37,32 +48,59 @@ const UserManagementPage: React.FC = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      // Fetch profiles from Supabase
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*');
+      const { data: { users }, error } = await supabase.auth.admin.listUsers();
       
       if (error) {
-        throw error;
+        // Fallback to fetching only the current session if admin API fails
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session) {
+          // If we at least have the current user's session, show that
+          const sessionUser = sessionData.session.user;
+          const userData: User = {
+            id: sessionUser.id,
+            name: sessionUser.user_metadata.name || 'Unknown User',
+            email: sessionUser.email || 'No Email',
+            role: sessionUser.user_metadata.role || 'researcher',
+            department: sessionUser.user_metadata.department || 'Unassigned',
+            status: 'active',
+            lastLogin: new Date(sessionUser.last_sign_in_at || '').toLocaleString() || 'Unknown',
+          };
+          setUsers([userData]);
+          console.log("Showing only current user due to permission restrictions:", userData);
+        } else {
+          throw new Error("Could not fetch user data");
+        }
+      } else if (users) {
+        // If admin API works, transform the full list
+        const transformedUsers: User[] = users.map(user => ({
+          id: user.id,
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'Unknown User',
+          email: user.email || 'No Email',
+          role: user.user_metadata?.role || 'researcher',
+          department: user.user_metadata?.department || 'Unassigned',
+          status: user.banned ? 'banned' : user.confirmed_at ? 'active' : 'pending',
+          lastLogin: user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never',
+        }));
+        
+        setUsers(transformedUsers);
       }
-      
-      // Transform the data to match our User type
-      const transformedUsers: User[] = data.map(profile => ({
-        id: profile.id,
-        name: profile.name || 'Unnamed User',
-        email: profile.email || 'No Email',
-        role: profile.role || 'researcher',
-        department: profile.department || 'Unassigned',
-        // For now, we'll set all users as active since we don't have this info
-        status: 'active',
-        // Similarly, we don't have last login info yet
-        lastLogin: 'Unknown',
-      }));
-      
-      setUsers(transformedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
-      toast.error("Failed to load users.");
+      toast.error("Failed to load users. Using session data if available.");
+      
+      // Fallback to current user session if available
+      if (session?.user) {
+        const userData: User = {
+          id: session.user.id,
+          name: session.user.user_metadata.name || 'Current User',
+          email: session.user.email || 'No Email',
+          role: session.user.user_metadata.role || 'researcher',
+          department: session.user.user_metadata.department || 'Unassigned',
+          status: 'active',
+          lastLogin: 'Current session',
+        };
+        setUsers([userData]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -196,60 +234,65 @@ const UserManagementPage: React.FC = () => {
               </div>
             ) : (
               <>
-                <div className="rounded-md border">
-                  <div className="grid grid-cols-12 bg-muted/50 p-3 text-sm font-medium">
-                    <div className="col-span-3">User</div>
-                    <div className="col-span-2">Role</div>
-                    <div className="col-span-3">Department</div>
-                    <div className="col-span-2">Status</div>
-                    <div className="col-span-2">Actions</div>
-                  </div>
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((user) => (
-                      <div 
-                        key={user.id}
-                        className="grid grid-cols-12 p-3 text-sm border-t hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="col-span-3 font-medium flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src="" />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div>{user.name}</div>
-                            <div className="text-muted-foreground text-xs">{user.email}</div>
-                          </div>
-                        </div>
-                        <div className="col-span-2">
-                          <Badge variant="outline" className="capitalize">
-                            {user.role.replace('_', ' ')}
-                          </Badge>
-                        </div>
-                        <div className="col-span-3">{user.department || 'Not assigned'}</div>
-                        <div className="col-span-2">
-                          <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                            user.status === "active" 
-                              ? "bg-green-100 text-green-800" 
-                              : user.status === "inactive"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}>
-                            {user.status}
-                          </span>
-                        </div>
-                        <div className="col-span-2">
-                          <Button variant="ghost" size="sm">
-                            Edit
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-8 text-center text-muted-foreground">
-                      No users found matching your filters.
-                    </div>
-                  )}
-                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[300px]">User</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src="" />
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{user.name}</div>
+                                <div className="text-muted-foreground text-xs">{user.email}</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {user.role.replace('_', ' ')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{user.department || 'Not assigned'}</TableCell>
+                          <TableCell>
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs ${
+                              user.status === "active" 
+                                ? "bg-green-100 text-green-800" 
+                                : user.status === "banned"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}>
+                              {user.status}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">
+                              Edit
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No users found matching your filters.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
                 <div className="flex items-center justify-between mt-4">
                   <div className="text-sm text-muted-foreground">
                     Showing <strong>{filteredUsers.length}</strong> of <strong>{users.length}</strong> users
