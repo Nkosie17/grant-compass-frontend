@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth/useAuth";
 import { LocationState } from "@/types/router";
 
 export const useLoginForm = () => {
