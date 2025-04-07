@@ -43,7 +43,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
             <Route path="/dashboard/*" element={
               <DashboardLayout>
-                {/* Dashboard routes will be rendered here */}
+                {/* Dashboard content will be added later */}
               </DashboardLayout>
             } />
             <Route path="/setup" element={<SetupPage />} />
