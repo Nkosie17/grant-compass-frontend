@@ -50,6 +50,12 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     setIsSubmitting(true);
     setLoginError(null);
 
@@ -70,6 +76,7 @@ const LoginForm: React.FC = () => {
       console.error("Login error:", error);
       setLoginError(error.message || "Login failed. Please check your credentials.");
     } finally {
+      // Ensure isSubmitting is always reset to false, even if login fails
       setIsSubmitting(false);
     }
   };
@@ -106,6 +113,7 @@ const LoginForm: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
@@ -122,6 +130,7 @@ const LoginForm: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
             </div>
             <Button
@@ -149,6 +158,7 @@ const LoginForm: React.FC = () => {
               variant="outline" 
               className="w-full mt-4"
               onClick={() => toast.info("SSO integration coming soon")}
+              disabled={isSubmitting}
             >
               AU Single Sign-On
             </Button>

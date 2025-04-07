@@ -22,6 +22,11 @@ const RegisterForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     if (password !== confirmPassword) {
       toast.error("Passwords don't match");
       return;
@@ -38,10 +43,11 @@ const RegisterForm: React.FC = () => {
       await register(name, email, password, role);
       toast.success("Registration successful. Your account is pending approval.");
       navigate("/login");
-    } catch (error) {
-      toast.error("Registration failed. Please try again.");
+    } catch (error: any) {
+      toast.error(error.message || "Registration failed. Please try again.");
       console.error(error);
     } finally {
+      // Ensure isSubmitting is always reset to false
       setIsSubmitting(false);
     }
   };
@@ -65,6 +71,7 @@ const RegisterForm: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
             </div>
             
@@ -77,6 +84,7 @@ const RegisterForm: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
               <p className="text-xs text-muted-foreground">
                 Please use your institutional email address
@@ -92,6 +100,7 @@ const RegisterForm: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
             </div>
             
@@ -104,6 +113,7 @@ const RegisterForm: React.FC = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                disabled={isSubmitting}
               />
             </div>
             
