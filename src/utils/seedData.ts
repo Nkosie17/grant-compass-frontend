@@ -1,5 +1,5 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/supabase/typedClient";
 import { ALL_GRANTS, GRANT_OPPORTUNITIES } from "@/data/mockData";
 
 /**
@@ -40,7 +40,7 @@ export async function seedDatabase() {
 
   try {
     // Insert grant data
-    const { error: grantsError } = await supabase
+    const { error: grantsError } = await db
       .from('grants')
       .upsert(grantsData)
       .select();
@@ -53,7 +53,7 @@ export async function seedDatabase() {
     console.log(`Successfully inserted ${grantsData.length} grants`);
 
     // Insert grant opportunities
-    const { error: opportunitiesError } = await supabase
+    const { error: opportunitiesError } = await db
       .from('grant_opportunities')
       .upsert(opportunitiesData)
       .select();
