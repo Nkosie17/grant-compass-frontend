@@ -10,6 +10,10 @@ export const useLoginForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   
+  const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as LocationState;
+  
   // Safely access auth context with error handling
   let auth;
   try {
@@ -28,9 +32,6 @@ export const useLoginForm = () => {
   }
   
   const { login, isAuthenticated, isLoading, user } = auth;
-  const navigate = useNavigate();
-  const location = useLocation();
-  const locationState = location.state as LocationState;
   
   // Debug console log to track auth state changes
   useEffect(() => {
@@ -38,10 +39,7 @@ export const useLoginForm = () => {
     
     if (isAuthenticated && !isLoading && user) {
       console.log("User is authenticated, redirecting to dashboard", user);
-      // Small timeout to ensure state is fully updated
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 100);
+      navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, isLoading, user, navigate]);
 
@@ -65,15 +63,14 @@ export const useLoginForm = () => {
         user: auth.user
       });
       
-      // Manual navigation as a fallback
+      // Immediate navigation if auth state is already updated
       if (auth.isAuthenticated && auth.user) {
-        navigate("/dashboard");
+        navigate("/dashboard", { replace: true });
       }
     } catch (error: any) {
       console.error("Login error:", error);
       setLoginError(error.message || "Login failed. Please check your credentials.");
     } finally {
-      // Ensure isSubmitting is always reset to false, even if login fails
       setIsSubmitting(false);
     }
   };

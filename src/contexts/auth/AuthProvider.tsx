@@ -17,14 +17,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
+      
+      // Important: Use this pattern to avoid issues with Supabase auth callbacks
       if (session?.user) {
-        const profile = await fetchUserProfile(session.user.id);
-        if (profile) {
-          setUser(profile);
-        } else {
-          // Fallback to basic user from session
-          setUser(createBasicUserFromSession(session));
-        }
+        // First, set basic user info synchronously
+        const basicUser = createBasicUserFromSession(session);
+        setUser(basicUser);
+        
+        // Then fetch profile asynchronously using setTimeout to avoid potential deadlocks
+        setTimeout(async () => {
+          try {
+            const profile = await fetchUserProfile(session.user.id);
+            if (profile) {
+              setUser(profile);
+            }
+          } catch (error) {
+            console.error("Error fetching user profile:", error);
+          }
+        }, 0);
       } else {
         setUser(null);
       }
@@ -37,13 +47,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session } } = await db.auth.getSession();
         if (session?.user) {
           console.log("Found existing session for user:", session.user.id);
+          
+          // First set basic user info synchronously
+          setUser(createBasicUserFromSession(session));
+          
+          // Then fetch profile asynchronously
           const profile = await fetchUserProfile(session.user.id);
           if (profile) {
             console.log("User profile loaded:", profile);
             setUser(profile);
-          } else {
-            // Fallback to session user data
-            setUser(createBasicUserFromSession(session));
           }
         } else {
           console.log("No existing session found");
@@ -79,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data?.user) {
         console.log("Login successful for:", data.user.email);
-        // Create a basic user object even if profile fetch fails
+        // Create a basic user object right away
         setUser({
           id: data.user.id,
           name: data.user.user_metadata?.name || "User",

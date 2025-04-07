@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
 
 interface LoginFormFieldsProps {
   email: string;
@@ -75,7 +76,11 @@ const LoginFormFields: React.FC<LoginFormFieldsProps> = ({
         className="w-full bg-au-purple hover:bg-au-purple-dark"
         disabled={isSubmitting}
       >
-        {isSubmitting ? "Signing in..." : "Sign In"}
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in...
+          </>
+        ) : "Sign In"}
       </Button>
     </form>
   );
