@@ -23,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, session?.user?.id);
       if (session?.user) {
         try {
           // Fetch user profile from our profiles table
@@ -71,6 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error("Error fetching user profile:", error);
             setUser(null);
           } else {
+            console.log("User profile loaded:", profile);
             setUser({
               id: profile.id,
               name: profile.name,
@@ -107,8 +109,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
 
-      // Authentication is handled by the onAuthStateChange listener
-      toast.success("Login successful");
+      if (data?.user) {
+        // We don't need to set user here as it will be handled by the onAuthStateChange listener
+        toast.success("Login successful");
+        return;
+      }
+
+      throw new Error("No user returned from authentication");
     } catch (error: any) {
       console.error("Login failed:", error);
       toast.error(error.message || "Login failed. Please check your credentials.");
@@ -122,8 +129,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await db.auth.signOut();
       // Auth state changes are handled by onAuthStateChange
+      toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout failed:", error);
+      toast.error("Failed to log out");
     }
   };
 

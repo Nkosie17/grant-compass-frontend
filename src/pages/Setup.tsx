@@ -67,12 +67,13 @@ const SetupPage: React.FC = () => {
         }),
       });
 
-      const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.message || "Failed to create admin user");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create admin user");
       }
 
+      const data = await response.json();
+      
       toast.success("Admin account created successfully");
       toast.info("You can now log in with admin@africau.edu");
       
@@ -85,7 +86,10 @@ const SetupPage: React.FC = () => {
         toast.error("Failed to seed database with sample data");
       }
       
-      navigate("/login");
+      // Redirect to login page with a message
+      navigate("/login", { 
+        state: { message: "Admin account created. You can now log in with admin@africau.edu" }
+      });
     } catch (error: any) {
       console.error("Error creating admin account:", error);
       toast.error(error.message || "Failed to create admin account");
@@ -149,6 +153,7 @@ const SetupPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={8}
               />
               <p className="text-xs text-muted-foreground">
                 Choose a secure password for the admin account
