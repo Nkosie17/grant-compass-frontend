@@ -41,7 +41,11 @@ function App() {
             <Route path="/login" element={<LoginForm />} />
             <Route path="/register" element={<RegisterForm />} />
             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
-            <Route path="/dashboard/*" element={<DashboardLayout />} />
+            <Route path="/dashboard/*" element={
+              <DashboardLayout>
+                {/* Dashboard routes will be rendered here */}
+              </DashboardLayout>
+            } />
             <Route path="/setup" element={<SetupPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

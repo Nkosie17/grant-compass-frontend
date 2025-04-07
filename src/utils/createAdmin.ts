@@ -42,6 +42,17 @@ export async function createDefaultAdmin() {
 
     const data = await response.json();
     console.log("Admin account created successfully:", data);
+    
+    // Double-check the profile has admin role (in case the trigger didn't set it properly)
+    const { error: updateError } = await db
+      .from('profiles')
+      .update({ role: 'admin' })
+      .eq('email', 'admin@africau.edu');
+      
+    if (updateError) {
+      console.error("Error updating admin role:", updateError);
+    }
+    
     return true;
   } catch (error) {
     console.error("Failed to create admin account:", error);
