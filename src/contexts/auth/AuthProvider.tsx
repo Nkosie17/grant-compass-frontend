@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { User, UserRole } from "@/types/auth";
 import { toast } from "sonner";
@@ -33,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } catch (error) {
             console.error("Error fetching user profile:", error);
+            // Keep using the basic user object on error
           }
         }, 0);
       } else {
@@ -52,10 +52,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(createBasicUserFromSession(session));
           
           // Then fetch profile asynchronously
-          const profile = await fetchUserProfile(session.user.id);
-          if (profile) {
-            console.log("User profile loaded:", profile);
-            setUser(profile);
+          try {
+            const profile = await fetchUserProfile(session.user.id);
+            if (profile) {
+              console.log("User profile loaded:", profile);
+              setUser(profile);
+            }
+          } catch (error) {
+            console.error("Error fetching user profile:", error);
+            // Keep using the basic user object on error
           }
         } else {
           console.log("No existing session found");
@@ -180,6 +185,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const createAdmin = async (password: string) => {
+    setIsLoading(true);
+    try {
+      // Call the create-admin edge function
+      const response = await fetch("https://jdsmyhemzlaccwptgpda.supabase.co/functions/v1/create-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "admin@africau.edu",
+          password
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create admin user");
+      }
+
+      const data = await response.json();
+      toast.success("Admin account created successfully");
+      toast.info("You can now log in with admin@africau.edu");
+      return true;
+    } catch (error: any) {
+      console.error("Error creating admin account:", error);
+      toast.error(error.message || "Failed to create admin account");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
@@ -187,7 +225,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     register,
-    clearAuthCache
+    clearAuthCache,
+    createAdmin
   };
 
   console.log("AuthProvider rendering with auth state:", { user: !!user, isLoading });

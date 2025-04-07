@@ -91,4 +91,3 @@ export const serve = async (req: Request) => {
     )
   }
 }
-

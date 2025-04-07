@@ -9,4 +9,5 @@ export type AuthContextType = {
   logout: () => Promise<void>;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   clearAuthCache: () => Promise<void>;
+  createAdmin: (password: string) => Promise<boolean>;
 };
