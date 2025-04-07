@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, UserRole } from "@/types/auth";
 import { toast } from "sonner";
@@ -11,9 +10,9 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  clearAuthCache: () => Promise<void>;
 };
 
-// Create the context with a default undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -22,16 +21,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   console.log("AuthProvider initialized");
 
-  // Initialize auth state from Supabase session
   useEffect(() => {
     console.log("AuthProvider useEffect running");
     
-    // Set up auth state listener FIRST
     const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
       if (session?.user) {
         try {
-          // Fetch user profile from our profiles table
           const { data: profile, error } = await db
             .from('profiles')
             .select('*')
@@ -61,14 +57,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
     });
 
-    // THEN check for existing session
     const initializeAuth = async () => {
       try {
         console.log("Checking for existing session");
         const { data: { session } } = await db.auth.getSession();
         if (session?.user) {
           console.log("Found existing session for user:", session.user.id);
-          // Fetch user profile
           const { data: profile, error } = await db
             .from('profiles')
             .select('*')
@@ -122,7 +116,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data?.user) {
-        // We don't need to set user here as it will be handled by the onAuthStateChange listener
         console.log("Login successful for:", data.user.email);
         toast.success("Login successful");
         return;
@@ -143,7 +136,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       await db.auth.signOut();
-      // Auth state changes are handled by onAuthStateChange
       toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -157,12 +149,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("Registration attempt for:", email);
     setIsLoading(true);
     try {
-      // For admin and grant_office roles, only admins should be able to create
       if (role !== "researcher" && (!user || user.role !== "admin")) {
         throw new Error("Only administrators can create staff accounts");
       }
 
-      // Check if email has the right domain
       if (!email.endsWith('@africau.edu')) {
         throw new Error("Please use your Africa University email (@africau.edu)");
       }
@@ -180,11 +170,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
       
-      // If we're registering someone else (as admin), don't log in
       if (user && user.role === "admin" && role !== user.role) {
         toast.success("Registration successful. User account is pending approval.");
       } else {
-        // For self-registration
         toast.success("Registration successful. Your account is pending approval.");
       }
       
@@ -198,20 +186,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const clearAuthCache = async () => {
+    try {
+      await db.auth.signOut();
+      setUser(null);
+      localStorage.removeItem('supabase.auth.token');
+      toast.success("Authentication cache cleared successfully");
+    } catch (error) {
+      console.error("Error clearing auth cache:", error);
+      toast.error("Failed to clear authentication cache");
+    }
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
     logout,
-    register
+    register,
+    clearAuthCache
   };
 
   console.log("AuthProvider rendering with auth state:", { user: !!user, isLoading });
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Updated useAuth hook with better error handling
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
