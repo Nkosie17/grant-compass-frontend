@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,7 +15,8 @@ const LoginForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   
-  let auth: ReturnType<typeof useAuth>;
+  // Safely access auth context with error handling
+  let auth;
   try {
     auth = useAuth();
   } catch (error) {

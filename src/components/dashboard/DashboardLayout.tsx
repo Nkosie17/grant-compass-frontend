@@ -12,9 +12,10 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   
-  // Use try-catch to handle potential context errors
   try {
     const { user, isAuthenticated, isLoading } = useAuth();
+    
+    console.log("DashboardLayout auth state:", { isAuthenticated, isLoading });
 
     // If auth is still loading, show nothing or a loader
     if (isLoading) {
@@ -27,6 +28,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
     // If not authenticated, redirect to login
     if (!isAuthenticated || !user) {
+      console.log("Not authenticated, redirecting to login");
       return <Navigate to="/login" state={{ message: "Please sign in to access this page" }} replace />;
     }
 

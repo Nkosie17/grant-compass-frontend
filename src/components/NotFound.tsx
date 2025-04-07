@@ -5,7 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 const NotFound: React.FC = () => {
-  const { isAuthenticated } = useAuth();
+  let isAuthenticated = false;
+  
+  try {
+    const auth = useAuth();
+    isAuthenticated = auth.isAuthenticated;
+  } catch (error) {
+    console.error("Auth context error in NotFound:", error);
+    // Assume not authenticated if context error
+  }
   
   return (
     <div className="flex min-h-screen items-center justify-center bg-au-neutral-100">

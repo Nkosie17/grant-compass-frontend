@@ -1,10 +1,11 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import React from "react";
+import React, { Suspense } from "react";
 
 // Landing and Authentication Pages
 import LandingPage from "@/components/LandingPage";
@@ -46,11 +47,13 @@ import AgreementsPage from "@/components/dashboard/agreements/AgreementsPage";
 
 const queryClient = new QueryClient();
 
-// Role-based dashboard router - use DashboardRouter inside AuthProvider context
+// Role-based dashboard router 
 const DashboardRouter = () => {
-  const { user } = React.lazy(() => import("@/contexts/AuthContext").then(module => ({ default: module.useAuth })))();
+  const { user } = useAuth();
   
-  if (!user) return <Navigate to="/login" />;
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
   
   switch (user.role) {
     case "researcher":
