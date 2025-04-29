@@ -4,8 +4,11 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import React, { Suspense } from "react";
+import { AuthProvider } from "@/contexts/AuthContext";
+import React from "react";
+
+// New role-based routing components
+import { RequireAuth, RequireRole } from "./routes/ProtectedRoutes";
 
 // Landing and Authentication Pages
 import LandingPage from "@/components/LandingPage";
@@ -15,7 +18,6 @@ import ForgotPasswordForm from "@/components/auth/ForgotPasswordForm";
 import SetupPage from "@/pages/Setup";
 
 // Dashboard Components
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import ResearcherDashboard from "@/components/dashboard/researcher/ResearcherDashboard";
 import GrantOfficeDashboard from "@/components/dashboard/grant-office/GrantOfficeDashboard";
 import AdminDashboard from "@/components/dashboard/admin/AdminDashboard";
@@ -47,34 +49,6 @@ import AgreementsPage from "@/components/dashboard/agreements/AgreementsPage";
 
 const queryClient = new QueryClient();
 
-// Role-based dashboard router 
-const DashboardRouter = () => {
-  const { user } = useAuth();
-  
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-  
-  console.log("DashboardRouter - Current user role:", user.role);
-  console.log("DashboardRouter - User details:", user);
-  
-  switch (user.role) {
-    case "researcher":
-      console.log("Loading Researcher Dashboard");
-      return <ResearcherDashboard />;
-    case "grant_office":
-      console.log("Loading Grant Office Dashboard");
-      return <GrantOfficeDashboard />;
-    case "admin":
-      console.log("Loading Admin Dashboard");
-      return <AdminDashboard />;
-    default:
-      // Fallback to researcher dashboard if role is unknown
-      console.log("Unknown role, defaulting to Researcher Dashboard");
-      return <ResearcherDashboard />;
-  }
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
@@ -90,130 +64,70 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPasswordForm />} />
             <Route path="/setup" element={<SetupPage />} />
             
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={
-              <DashboardLayout>
-                <DashboardRouter />
-              </DashboardLayout>
-            } />
-            
-            {/* Grant Application Feature */}
-            <Route path="/grant-application" element={
-              <DashboardLayout>
-                <GrantApplicationForm />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/new-application" element={
-              <DashboardLayout>
-                <GrantApplicationForm />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/grant-review/:grantId" element={
-              <DashboardLayout>
-                <GrantReviewForm />
-              </DashboardLayout>
-            } />
-
-            <Route path="/create-opportunity" element={
-              <DashboardLayout>
-                <CreateOpportunityForm />
-              </DashboardLayout>
-            } />
-            
-            {/* Feature Pages */}
-            <Route path="/opportunities" element={
-              <DashboardLayout>
-                <OpportunitiesList />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/my-grants" element={
-              <DashboardLayout>
-                <MyGrants />
-              </DashboardLayout>
-            } />
-            
-            {/* IP and Agreement Management */}
-            <Route path="/ip-management" element={
-              <DashboardLayout>
-                <IntellectualPropertyPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/agreements" element={
-              <DashboardLayout>
-                <AgreementsPage />
-              </DashboardLayout>
-            } />
-            
-            {/* Other Pages */}
-            <Route path="/notifications" element={
-              <DashboardLayout>
-                <NotificationsPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/settings" element={
-              <DashboardLayout>
-                <SettingsPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/reports" element={
-              <DashboardLayout>
-                <ReportsPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/calendar" element={
-              <DashboardLayout>
-                <CalendarPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/reporting" element={
-              <DashboardLayout>
-                <ReportingPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/proposals" element={
-              <DashboardLayout>
-                <ProposalsPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/finance" element={
-              <DashboardLayout>
-                <FinancePage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/applications" element={
-              <DashboardLayout>
-                <ApplicationsPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/admin-settings" element={
-              <DashboardLayout>
-                <AdminSettingsPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/users" element={
-              <DashboardLayout>
-                <UserManagementPage />
-              </DashboardLayout>
-            } />
-            
-            <Route path="/system-reports" element={
-              <DashboardLayout>
-                <SystemReportsPage />
-              </DashboardLayout>
-            } />
+            {/* Protected Routes - Authentication required */}
+            <Route element={<RequireAuth />}>
+              {/* Dashboard Routes with Role-Based Access */}
+              <Route path="/dashboard" element={
+                <Routes>
+                  <Route path="/" element={<Navigate to="" replace />} />
+                  <Route 
+                    path="/researcher" 
+                    element={<RequireRole allowedRoles={['researcher']} />} 
+                    children={[
+                      <Route index element={<ResearcherDashboard />} />
+                    ]} 
+                  />
+                  <Route 
+                    path="/grant-office" 
+                    element={<RequireRole allowedRoles={['grant_office']} />} 
+                    children={[
+                      <Route index element={<GrantOfficeDashboard />} />
+                    ]} 
+                  />
+                  <Route 
+                    path="/admin" 
+                    element={<RequireRole allowedRoles={['admin']} />} 
+                    children={[
+                      <Route index element={<AdminDashboard />} />
+                    ]} 
+                  />
+                  <Route index element={<DashboardRouter />} />
+                </Routes>
+              } />
+              
+              {/* Common Routes for All Authenticated Users */}
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              
+              {/* Researcher Routes */}
+              <Route element={<RequireRole allowedRoles={['researcher', 'admin']} />}>
+                <Route path="/my-grants" element={<MyGrants />} />
+                <Route path="/opportunities" element={<OpportunitiesList />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/grant-application" element={<GrantApplicationForm />} />
+                <Route path="/new-application" element={<GrantApplicationForm />} />
+              </Route>
+              
+              {/* Grant Office Routes */}
+              <Route element={<RequireRole allowedRoles={['grant_office', 'admin']} />}>
+                <Route path="/reporting" element={<ReportingPage />} />
+                <Route path="/proposals" element={<ProposalsPage />} />
+                <Route path="/finance" element={<FinancePage />} />
+                <Route path="/applications" element={<ApplicationsPage />} />
+                <Route path="/create-opportunity" element={<CreateOpportunityForm />} />
+                <Route path="/grant-review/:grantId" element={<GrantReviewForm />} />
+                <Route path="/ip-management" element={<IntellectualPropertyPage />} />
+                <Route path="/agreements" element={<AgreementsPage />} />
+              </Route>
+              
+              {/* Admin Only Routes */}
+              <Route element={<RequireRole allowedRoles={['admin']} />}>
+                <Route path="/admin-settings" element={<AdminSettingsPage />} />
+                <Route path="/users" element={<UserManagementPage />} />
+                <Route path="/system-reports" element={<SystemReportsPage />} />
+              </Route>
+            </Route>
             
             {/* Catch-all 404 Route */}
             <Route path="*" element={<NotFound />} />
@@ -223,5 +137,28 @@ const App = () => (
     </BrowserRouter>
   </QueryClientProvider>
 );
+
+// Role-based dashboard router 
+const DashboardRouter = () => {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+  
+  console.log("DashboardRouter - Current user role:", user.role);
+  
+  switch (user.role) {
+    case "researcher":
+      return <ResearcherDashboard />;
+    case "grant_office":
+      return <GrantOfficeDashboard />;
+    case "admin":
+      return <AdminDashboard />;
+    default:
+      // Fallback to researcher dashboard if role is unknown
+      return <ResearcherDashboard />;
+  }
+};
 
 export default App;

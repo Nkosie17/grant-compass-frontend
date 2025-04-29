@@ -27,10 +27,13 @@ import {
   FileSignature,
   BookOpen
 } from "lucide-react";
+import NotificationCenter from "./notifications/NotificationCenter";
+import { useRoleBasedAccess } from "@/hooks/useRoleBasedAccess";
 
 export const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const { getRoleBasedValue } = useRoleBasedAccess();
   
   if (!user) return null;
   
@@ -49,13 +52,32 @@ export const AppSidebar: React.FC = () => {
       .toUpperCase();
   };
 
-  const menuItems = (() => {
-    // Base menu items for all roles
-    const baseItems = [
+  const menuItems = getRoleBasedValue({
+    researcher: [
       {
         name: "Dashboard",
         path: "/dashboard",
         icon: <Home className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "My Grants",
+        path: "/my-grants",
+        icon: <File className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Find Opportunities",
+        path: "/opportunities",
+        icon: <Search className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Reports",
+        path: "/reports",
+        icon: <FileText className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Calendar",
+        path: "/calendar",
+        icon: <Calendar className="h-4 w-4 mr-2" />,
       },
       {
         name: "Notifications",
@@ -67,92 +89,99 @@ export const AppSidebar: React.FC = () => {
         path: "/settings",
         icon: <Settings className="h-4 w-4 mr-2" />,
       },
-    ];
-
-    // Explicitly check for exact role value to ensure proper menu items
-    if (user.role === "admin") {
-      console.log("Rendering admin menu items");
-      return [
-        ...baseItems,
-        {
-          name: "User Management",
-          path: "/users",
-          icon: <Users className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "System Reports",
-          path: "/system-reports",
-          icon: <BarChart2 className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "Admin Settings",
-          path: "/admin-settings",
-          icon: <Settings className="h-4 w-4 mr-2" />,
-        },
-      ];
-    } else if (user.role === "grant_office") {
-      console.log("Rendering grant office menu items");
-      return [
-        ...baseItems,
-        {
-          name: "Applications",
-          path: "/applications",
-          icon: <File className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "Reporting",
-          path: "/reporting",
-          icon: <BarChart2 className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "Financial Management",
-          path: "/finance",
-          icon: <FileText className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "Call-for-Proposals",
-          path: "/proposals",
-          icon: <Calendar className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "IP Management",
-          path: "/ip-management",
-          icon: <Award className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "Agreements",
-          path: "/agreements",
-          icon: <FileSignature className="h-4 w-4 mr-2" />,
-        },
-      ];
-    } else {
-      // Default to researcher role
-      console.log("Rendering researcher menu items");
-      return [
-        ...baseItems,
-        {
-          name: "My Grants",
-          path: "/my-grants",
-          icon: <File className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "Find Opportunities",
-          path: "/opportunities",
-          icon: <Search className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "Reports",
-          path: "/reports",
-          icon: <FileText className="h-4 w-4 mr-2" />,
-        },
-        {
-          name: "Calendar",
-          path: "/calendar",
-          icon: <Calendar className="h-4 w-4 mr-2" />,
-        },
-      ];
-    }
-  })();
+    ],
+    grant_office: [
+      {
+        name: "Dashboard",
+        path: "/dashboard",
+        icon: <Home className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Applications",
+        path: "/applications",
+        icon: <File className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Reporting",
+        path: "/reporting",
+        icon: <BarChart2 className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Financial Management",
+        path: "/finance",
+        icon: <FileText className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Call-for-Proposals",
+        path: "/proposals",
+        icon: <Calendar className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "IP Management",
+        path: "/ip-management",
+        icon: <Award className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Agreements",
+        path: "/agreements",
+        icon: <FileSignature className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Notifications",
+        path: "/notifications",
+        icon: <Bell className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Settings",
+        path: "/settings",
+        icon: <Settings className="h-4 w-4 mr-2" />,
+      },
+    ],
+    admin: [
+      {
+        name: "Dashboard",
+        path: "/dashboard",
+        icon: <Home className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "User Management",
+        path: "/users",
+        icon: <Users className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "System Reports",
+        path: "/system-reports",
+        icon: <BarChart2 className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Notifications",
+        path: "/notifications",
+        icon: <Bell className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Admin Settings",
+        path: "/admin-settings",
+        icon: <Settings className="h-4 w-4 mr-2" />,
+      },
+    ],
+    default: [
+      {
+        name: "Dashboard", 
+        path: "/dashboard", 
+        icon: <Home className="h-4 w-4 mr-2" />
+      },
+      {
+        name: "Notifications",
+        path: "/notifications",
+        icon: <Bell className="h-4 w-4 mr-2" />,
+      },
+      {
+        name: "Settings",
+        path: "/settings",
+        icon: <Settings className="h-4 w-4 mr-2" />,
+      },
+    ]
+  }) || [];
 
   return (
     <Sidebar className="h-screen border-r">
@@ -164,6 +193,10 @@ export const AppSidebar: React.FC = () => {
             className="h-16 w-auto" 
           />
           <span className="text-lg font-semibold">AU GMS</span>
+        </div>
+        <div className="flex items-center">
+          <NotificationCenter />
+          <SidebarTrigger />
         </div>
       </SidebarHeader>
 

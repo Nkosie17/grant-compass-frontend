@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { 
   Table, 
@@ -46,7 +45,7 @@ const IPTable: React.FC<IPTableProps> = ({ items: propItems, refresh }) => {
           grantId: item.grant_id,
           researchers: item.researchers,
           status: item.status,
-          description: item.description
+          description: item.description || ''
         }));
 
         setItems(transformedData);
@@ -135,6 +134,32 @@ const IPTable: React.FC<IPTableProps> = ({ items: propItems, refresh }) => {
       </Table>
     </div>
   );
+};
+
+// Define the helper functions that were in the original component
+const getTypeLabel = (type: IPType) => {
+  switch (type) {
+    case "patent": return "Patent";
+    case "copyright": return "Copyright";
+    case "trademark": return "Trademark";
+    case "trade_secret": return "Trade Secret";
+    default: return type;
+  }
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "registered":
+      return "bg-green-100 text-green-800";
+    case "pending":
+      return "bg-yellow-100 text-yellow-800";
+    case "rejected":
+      return "bg-red-100 text-red-800";
+    case "protected":
+      return "bg-blue-100 text-blue-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
 };
 
 export default IPTable;
