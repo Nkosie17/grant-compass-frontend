@@ -8,7 +8,9 @@ import type { Database } from '@/types/supabaseTypes';
 // This provides better TypeScript support for the database tables
 export const db = supabase;
 
-// Helper function to get a typed table reference
-export function useTable<T extends keyof Database['public']['Tables']>(tableName: T) {
+// Helper function to get a typed table reference - fixed type parameters
+export function useTable<T extends keyof Database['public']['Tables']>(
+  tableName: T
+) {
   return supabase.from<Database['public']['Tables'][T]['Row']>(tableName);
 }

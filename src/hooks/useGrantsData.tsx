@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth/useAuth";
 import { toast } from "sonner";
-import { Grant, GrantOpportunity } from "@/types/grants";
+import { Grant, GrantOpportunity, GrantCategory, FundingSource } from "@/types/grants";
 
 export function useGrantsData() {
   const [grants, setGrants] = useState<Grant[]>([]);
@@ -28,7 +28,30 @@ export function useGrantsData() {
       
       if (error) throw error;
       
-      setGrants(data);
+      // Transform response data to match Grant type
+      const transformedGrants: Grant[] = data.map(grant => ({
+        id: grant.id,
+        title: grant.title,
+        description: grant.description,
+        amount: grant.amount,
+        startDate: grant.start_date,
+        endDate: grant.end_date,
+        status: grant.status,
+        category: grant.category,
+        fundingSource: grant.funding_source,
+        submittedBy: grant.submitted_by,
+        submittedDate: grant.submitted_date,
+        reviewComments: grant.review_comments,
+        reviewedBy: grant.reviewed_by,
+        reviewedDate: grant.reviewed_date,
+        researcherId: grant.researcher_id,
+        researcherName: grant.researcher_name,
+        department: grant.department,
+        created_at: grant.created_at,
+        updated_at: grant.updated_at,
+      }));
+      
+      setGrants(transformedGrants);
     } catch (error: any) {
       console.error("Error fetching grants:", error);
       toast.error("Failed to load grants: " + error.message);
@@ -47,7 +70,22 @@ export function useGrantsData() {
         
       if (error) throw error;
       
-      setOpportunities(data);
+      // Transform response data to match GrantOpportunity type
+      const transformedOpportunities: GrantOpportunity[] = data.map(opportunity => ({
+        id: opportunity.id,
+        title: opportunity.title,
+        description: opportunity.description,
+        applicationUrl: opportunity.application_url || "",
+        eligibility: opportunity.eligibility,
+        fundingAmount: opportunity.funding_amount,
+        fundingSource: opportunity.funding_source as FundingSource,
+        category: opportunity.category as GrantCategory,
+        deadline: opportunity.deadline,
+        postedBy: opportunity.posted_by || "",
+        postedDate: opportunity.posted_date,
+      }));
+      
+      setOpportunities(transformedOpportunities);
     } catch (error: any) {
       console.error("Error fetching grant opportunities:", error);
       toast.error("Failed to load grant opportunities: " + error.message);
@@ -61,7 +99,11 @@ export function useGrantsData() {
     try {
       // Add researcher info and set initial status
       const grantData = {
-        ...grant,
+        title: grant.title || "",
+        description: grant.description || "",
+        amount: grant.amount || 0,
+        category: grant.category || "research",
+        funding_source: grant.fundingSource || "internal",
         researcher_id: user.id,
         researcher_name: user.name,
         department: user.department || "General",
@@ -87,7 +129,26 @@ export function useGrantsData() {
         "grant"
       );
       
-      return data[0];
+      // Transform the returned data to match Grant type
+      return {
+        id: data[0].id,
+        title: data[0].title,
+        description: data[0].description,
+        amount: data[0].amount,
+        startDate: data[0].start_date,
+        endDate: data[0].end_date,
+        status: data[0].status,
+        category: data[0].category,
+        fundingSource: data[0].funding_source,
+        submittedBy: data[0].submitted_by,
+        submittedDate: data[0].submitted_date,
+        reviewComments: data[0].review_comments,
+        reviewedBy: data[0].reviewed_by,
+        reviewedDate: data[0].reviewed_date,
+        researcherId: data[0].researcher_id,
+        researcherName: data[0].researcher_name,
+        department: data[0].department,
+      };
     } catch (error: any) {
       console.error("Error submitting grant application:", error);
       toast.error("Failed to submit application: " + error.message);
@@ -103,13 +164,22 @@ export function useGrantsData() {
     }
     
     try {
+      const opportunityData = {
+        title: opportunity.title || "",
+        description: opportunity.description || "",
+        application_url: opportunity.applicationUrl,
+        eligibility: opportunity.eligibility || "",
+        funding_amount: opportunity.fundingAmount || 0,
+        funding_source: opportunity.fundingSource || "internal",
+        category: opportunity.category || "research",
+        deadline: opportunity.deadline || new Date().toISOString(),
+        posted_by: user.id,
+        posted_date: new Date().toISOString()
+      };
+      
       const { data, error } = await supabase
         .from('grant_opportunities')
-        .insert({
-          ...opportunity,
-          posted_by: user.id,
-          posted_date: new Date().toISOString()
-        })
+        .insert(opportunityData)
         .select();
         
       if (error) throw error;
@@ -124,7 +194,20 @@ export function useGrantsData() {
         "opportunity"
       );
       
-      return data[0];
+      // Transform the returned data to match GrantOpportunity type
+      return {
+        id: data[0].id,
+        title: data[0].title,
+        description: data[0].description,
+        applicationUrl: data[0].application_url || "",
+        eligibility: data[0].eligibility,
+        fundingAmount: data[0].funding_amount,
+        fundingSource: data[0].funding_source as FundingSource,
+        category: data[0].category as GrantCategory,
+        deadline: data[0].deadline,
+        postedBy: data[0].posted_by || "",
+        postedDate: data[0].posted_date,
+      };
     } catch (error: any) {
       console.error("Error creating grant opportunity:", error);
       toast.error("Failed to create opportunity: " + error.message);

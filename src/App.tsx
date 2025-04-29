@@ -47,6 +47,9 @@ import SystemReportsPage from "@/components/dashboard/admin/SystemReportsPage";
 import IntellectualPropertyPage from "@/components/dashboard/ip/IntellectualPropertyPage";
 import AgreementsPage from "@/components/dashboard/agreements/AgreementsPage";
 
+// Fix: Import useAuth correctly
+import { useAuth } from "@/contexts/auth/useAuth";
+
 const queryClient = new QueryClient();
 
 const App = () => (
