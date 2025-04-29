@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      agreements: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_url: string | null
+          end_date: string
+          grant_id: string
+          id: string
+          parties: string[]
+          start_date: string
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_url?: string | null
+          end_date: string
+          grant_id: string
+          id?: string
+          parties: string[]
+          start_date: string
+          status: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_url?: string | null
+          end_date?: string
+          grant_id?: string
+          id?: string
+          parties?: string[]
+          start_date?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       grant_opportunities: {
         Row: {
           application_url: string | null
@@ -57,6 +102,158 @@ export type Database = {
         }
         Relationships: []
       }
+      grant_reports: {
+        Row: {
+          comments: string | null
+          created_at: string
+          due_date: string
+          grant_id: string
+          id: string
+          status: string
+          submission_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string
+          due_date: string
+          grant_id: string
+          id?: string
+          status: string
+          submission_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string
+          due_date?: string
+          grant_id?: string
+          id?: string
+          status?: string
+          submission_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grant_reports_grant_id_fkey"
+            columns: ["grant_id"]
+            isOneToOne: false
+            referencedRelation: "grants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grants: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          department: string | null
+          description: string
+          end_date: string | null
+          funding_source: string
+          id: string
+          researcher_id: string
+          researcher_name: string | null
+          review_comments: string | null
+          reviewed_by: string | null
+          reviewed_date: string | null
+          start_date: string | null
+          status: string
+          submitted_by: string | null
+          submitted_date: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          department?: string | null
+          description: string
+          end_date?: string | null
+          funding_source: string
+          id?: string
+          researcher_id: string
+          researcher_name?: string | null
+          review_comments?: string | null
+          reviewed_by?: string | null
+          reviewed_date?: string | null
+          start_date?: string | null
+          status: string
+          submitted_by?: string | null
+          submitted_date?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          department?: string | null
+          description?: string
+          end_date?: string | null
+          funding_source?: string
+          id?: string
+          researcher_id?: string
+          researcher_name?: string | null
+          review_comments?: string | null
+          reviewed_by?: string | null
+          reviewed_date?: string | null
+          start_date?: string | null
+          status?: string
+          submitted_by?: string | null
+          submitted_date?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      intellectual_property: {
+        Row: {
+          created_at: string
+          description: string | null
+          filing_date: string
+          grant_id: string
+          id: string
+          registration_number: string
+          researchers: string[]
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          filing_date: string
+          grant_id: string
+          id?: string
+          registration_number: string
+          researchers: string[]
+          status: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          filing_date?: string
+          grant_id?: string
+          id?: string
+          registration_number?: string
+          researchers?: string[]
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -87,6 +284,36 @@ export type Database = {
           related_type?: string | null
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          department: string | null
+          email: string
+          id: string
+          name: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          email: string
+          id: string
+          name: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          email?: string
+          id?: string
+          name?: string
+          role?: string
+          updated_at?: string
         }
         Relationships: []
       }

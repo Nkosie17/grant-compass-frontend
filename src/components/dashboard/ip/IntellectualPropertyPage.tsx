@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -14,67 +14,63 @@ import IPTable from "./IPTable";
 import IPForm from "./IPForm";
 import DashboardHeader from "../DashboardHeader";
 import { IPItem, IPType } from "@/types/grants";
-
-// Mock data for intellectual property items
-const MOCK_IP_ITEMS: IPItem[] = [
-  {
-    id: "ip1",
-    title: "Novel Approach for Sustainable Agriculture",
-    type: "patent" as IPType,
-    registrationNumber: "PAT123456",
-    filingDate: "2023-05-15",
-    grantId: "grant123",
-    researchers: ["John Doe", "Jane Smith"],
-    status: "registered",
-    description: "A novel approach to sustainable agriculture using AI-driven irrigation systems."
-  },
-  {
-    id: "ip2",
-    title: "Africa University Research Methodology Handbook",
-    type: "copyright" as IPType,
-    registrationNumber: "CR789012",
-    filingDate: "2023-02-10",
-    grantId: "grant456",
-    researchers: ["Alice Johnson"],
-    status: "registered",
-    description: "Comprehensive handbook detailing research methodologies for academic studies."
-  },
-  {
-    id: "ip3",
-    title: "AU Research Analytics Platform",
-    type: "trademark" as IPType,
-    registrationNumber: "TM345678",
-    filingDate: "2023-07-22",
-    grantId: "grant789",
-    researchers: ["Robert Brown", "Sarah Davis"],
-    status: "pending",
-    description: "Analytics platform for tracking and visualizing research outcomes."
-  },
-  {
-    id: "ip4",
-    title: "Innovative Water Purification Process",
-    type: "trade_secret" as IPType,
-    registrationNumber: "TS901234",
-    filingDate: "2023-03-30",
-    grantId: "grant123",
-    researchers: ["Michael Wilson"],
-    status: "protected",
-    description: "Proprietary water purification process using novel filtration technology."
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const IntellectualPropertyPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
-  const [ipItems, setIpItems] = useState<IPItem[]>(MOCK_IP_ITEMS);
+  const [ipItems, setIpItems] = useState<IPItem[]>([]);
   const [activeTab, setActiveTab] = useState("all");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch IP items
+  useEffect(() => {
+    const fetchIPItems = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('intellectual_property')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        // Transform data to match the IPItem interface
+        const transformedData: IPItem[] = data.map(item => ({
+          id: item.id,
+          title: item.title,
+          type: item.type as IPType,
+          registrationNumber: item.registration_number,
+          filingDate: new Date(item.filing_date).toISOString().split('T')[0],
+          grantId: item.grant_id,
+          researchers: item.researchers,
+          status: item.status,
+          description: item.description
+        }));
+
+        setIpItems(transformedData);
+      } catch (error) {
+        console.error("Error fetching IP items:", error);
+        toast.error("Failed to load intellectual property items");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchIPItems();
+  }, [refreshTrigger]);
   
   const filteredItems = activeTab === "all" 
     ? ipItems 
     : ipItems.filter(item => item.type === activeTab);
   
   const handleAddIP = (newIP: Omit<IPItem, "id">) => {
-    setIpItems([...ipItems, { id: `ip${ipItems.length + 1}`, ...newIP }]);
     setShowForm(false);
+    // Trigger a refresh to fetch the latest data
+    setRefreshTrigger(prev => prev + 1);
   };
   
   return (
@@ -121,7 +117,13 @@ const IntellectualPropertyPage: React.FC = () => {
                   </TabsList>
                 </Tabs>
                 
-                <IPTable items={filteredItems} />
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-40">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-au-purple"></div>
+                  </div>
+                ) : (
+                  <IPTable items={filteredItems} />
+                )}
               </>
             )}
           </CardContent>

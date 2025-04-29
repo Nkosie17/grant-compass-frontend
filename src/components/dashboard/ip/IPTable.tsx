@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { IPItem, IPType } from "@/types/grants";
 import { toast } from "sonner";
-import { db } from "@/integrations/supabase/typedClient";
+import { supabase } from "@/integrations/supabase/client";
 
 interface IPTableProps {
   items?: IPItem[];
@@ -27,7 +27,7 @@ const IPTable: React.FC<IPTableProps> = ({ items: propItems, refresh }) => {
     const fetchIPItems = async () => {
       try {
         setLoading(true);
-        const { data, error } = await db
+        const { data, error } = await supabase
           .from('intellectual_property')
           .select('*')
           .order('created_at', { ascending: false });
