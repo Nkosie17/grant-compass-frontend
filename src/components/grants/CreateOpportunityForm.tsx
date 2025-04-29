@@ -54,14 +54,16 @@ type FormValues = z.infer<typeof formSchema>;
 const sendNewOpportunityNotification = async (opportunityId: string, opportunityTitle: string) => {
   try {
     // Create notification in Supabase for all researchers
-    await supabase.from("notifications").insert({
-      user_id: "all", // Special value to indicate all users should see this
-      message: `New grant opportunity: ${opportunityTitle}`,
-      type: "opportunity",
-      is_read: false,
-      related_id: opportunityId,
-      related_type: "opportunity"
-    });
+    await supabase
+      .from("notifications")
+      .insert({
+        user_id: "all", // Special value to indicate all users should see this
+        message: `New grant opportunity: ${opportunityTitle}`,
+        type: "opportunity",
+        is_read: false,
+        related_id: opportunityId,
+        related_type: "opportunity"
+      });
     
     toast.success("Notification sent to all researchers about the new opportunity!");
   } catch (error) {

@@ -9,7 +9,87 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      grant_opportunities: {
+        Row: {
+          application_url: string | null
+          category: string
+          created_at: string
+          deadline: string
+          description: string
+          eligibility: string
+          funding_amount: number
+          funding_source: string
+          id: string
+          posted_by: string | null
+          posted_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          application_url?: string | null
+          category: string
+          created_at?: string
+          deadline: string
+          description: string
+          eligibility: string
+          funding_amount: number
+          funding_source: string
+          id?: string
+          posted_by?: string | null
+          posted_date?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          application_url?: string | null
+          category?: string
+          created_at?: string
+          deadline?: string
+          description?: string
+          eligibility?: string
+          funding_amount?: number
+          funding_source?: string
+          id?: string
+          posted_by?: string | null
+          posted_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_id: string | null
+          related_type: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_id?: string | null
+          related_type?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_id?: string | null
+          related_type?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

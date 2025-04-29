@@ -1,12 +1,15 @@
+
 import React, { useState, useEffect } from "react";
 import { User, UserRole } from "@/types/auth";
 import { toast } from "sonner";
 import { db } from "@/integrations/supabase/typedClient";
 import { AuthContext } from "./AuthContext";
 import { fetchUserProfile, createBasicUserFromSession } from "./utils";
+import { Session } from "@supabase/supabase-js";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   console.log("AuthProvider initialized");
@@ -16,6 +19,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const { data: { subscription } } = db.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
+      
+      setSession(session);
       
       // Important: Use this pattern to avoid issues with Supabase auth callbacks
       if (session?.user) {
@@ -55,6 +60,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         console.log("Checking for existing session");
         const { data: { session } } = await db.auth.getSession();
+        
+        setSession(session);
+        
         if (session?.user) {
           console.log("Found existing session for user:", session.user.id);
           
@@ -244,6 +252,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const value = {
     user,
+    session,
     isAuthenticated: !!user,
     isLoading,
     login,
