@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart2, CheckCircle, Clock, FileText, AlertCircle } from "lucide-react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { Grant } from "@/types/grants";
+import { Grant, GrantStatus, GrantCategory, FundingSource } from "@/types/grants";
 
 const GrantOfficeDashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -37,9 +38,9 @@ const GrantOfficeDashboard: React.FC = () => {
             amount: grant.amount,
             startDate: grant.start_date,
             endDate: grant.end_date,
-            status: grant.status,
-            category: grant.category,
-            fundingSource: grant.funding_source,
+            status: grant.status as GrantStatus, // Explicit type casting to GrantStatus
+            category: grant.category as GrantCategory,
+            fundingSource: grant.funding_source as FundingSource,
             submittedBy: grant.submitted_by,
             submittedDate: grant.submitted_date,
             researcherId: grant.researcher_id,
@@ -48,6 +49,11 @@ const GrantOfficeDashboard: React.FC = () => {
             reviewComments: grant.review_comments,
             reviewedBy: grant.reviewed_by,
             reviewedDate: grant.reviewed_date,
+            // Add the missing properties if they exist in the data
+            activities: grant.activities,
+            budget: grant.budget,
+            studentParticipation: grant.student_participation,
+            workPlan: grant.work_plan
           }));
 
           // Filter pending applications

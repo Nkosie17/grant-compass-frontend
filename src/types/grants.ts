@@ -55,6 +55,11 @@ export interface Grant {
   reviewComments?: string;
   reviewedBy?: string;
   reviewedDate?: string;
+  // Adding missing properties used in GrantReviewForm
+  activities?: string;
+  budget?: string;
+  studentParticipation?: string;
+  workPlan?: string;
 }
 
 export interface GrantOpportunity {
