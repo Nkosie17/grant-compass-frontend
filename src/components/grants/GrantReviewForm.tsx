@@ -1,26 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { Grant, GrantStatus } from "@/types/grants";
-import { supabase } from "@/integrations/supabase/client";
 
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Grant, GrantStatus, GrantCategory, FundingSource } from "@/types/grants";
+import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -28,354 +15,210 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 
-const reviewFormSchema = z.object({
-  status: z.enum(["approved", "rejected", "modifications_requested"] as const),
-  reviewComments: z.string().min(10, "Review comments must be at least 10 characters"),
-});
-
-type ReviewFormValues = z.infer<typeof reviewFormSchema>;
-
-const GrantReviewForm: React.FC = () => {
+export default function GrantReviewForm() {
   const { grantId } = useParams<{ grantId: string }>();
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
-  const [grant, setGrant] = useState<Grant | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const form = useForm<ReviewFormValues>({
-    resolver: zodResolver(reviewFormSchema),
-    defaultValues: {
-      status: "approved",
-      reviewComments: "",
+  const [reviewComments, setReviewComments] = useState<string>("");
+  const [status, setStatus] = useState<GrantStatus>("under_review");
+
+  const { data: grant, isLoading, error } = useQuery({
+    queryKey: ["grant", grantId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("grants")
+        .select("*")
+        .eq("id", grantId)
+        .single();
+
+      if (error) throw error;
+      return data;
     },
   });
 
-  // Add safe formatter functions to handle potentially undefined values
-  const safeFormatNumber = (value: number | undefined | null) => {
-    if (value === undefined || value === null) {
-      return "$0";
-    }
-    return `$${value.toLocaleString()}`;
-  };
-
-  // Format date safely
-  const safeFormatDate = (dateString: string | undefined | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
-  };
-
   useEffect(() => {
-    const fetchGrant = async () => {
-      setIsLoading(true);
-      try {
-        if (!grantId) return;
-        
-        // Fetch grant from Supabase
-        const { data, error } = await supabase
-          .from('grants')
-          .select('*')
-          .eq('id', grantId)
-          .single();
-        
-        if (error) throw error;
-        
-        if (data) {
-          // Transform the data to match the Grant type
-          const grantData: Grant = {
-            id: data.id,
-            title: data.title,
-            description: data.description,
-            amount: data.amount,
-            startDate: data.start_date,
-            endDate: data.end_date,
-            status: data.status,
-            category: data.category,
-            fundingSource: data.funding_source,
-            submittedBy: data.submitted_by,
-            submittedDate: data.submitted_date,
-            researcherId: data.researcher_id,
-            researcherName: data.researcher_name,
-            department: data.department,
-            reviewComments: data.review_comments,
-            reviewedBy: data.reviewed_by,
-            reviewedDate: data.reviewed_date,
-          };
-          
-          setGrant(grantData);
-        } else {
-          toast.error("Grant application not found");
-          navigate("/applications");
-        }
-      } catch (error) {
-        console.error("Error fetching grant:", error);
-        toast.error("Failed to load grant application");
-        navigate("/applications");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (grantId) {
-      fetchGrant();
+    if (grant) {
+      setStatus(grant.status as GrantStatus);
+      setReviewComments(grant.review_comments || "");
     }
-  }, [grantId, navigate]);
+  }, [grant]);
 
-  const onSubmit = async (data: ReviewFormValues) => {
-    if (!grant || !user) return;
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to review grants.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      setIsSubmitting(true);
-      
-      // Update the grant status and review information in Supabase
       const { error } = await supabase
-        .from('grants')
+        .from("grants")
         .update({
-          status: data.status,
-          review_comments: data.reviewComments,
+          status: status,
+          review_comments: reviewComments,
           reviewed_by: user.id,
-          reviewed_date: new Date().toISOString(),
+          reviewed_date: new Date().toISOString()
         })
-        .eq('id', grant.id);
+        .eq("id", grantId);
 
       if (error) throw error;
-      
-      // Create a notification for the researcher
-      if (grant.researcherId) {
-        const { error: notificationError } = await supabase
-          .from('notifications')
-          .insert({
-            user_id: grant.researcherId,
-            message: `Your grant application "${grant.title}" has been ${data.status.replace(/_/g, " ")}`,
-            type: "status_update",
-            related_id: grant.id,
-            related_type: "grant",
-            is_read: false,
-          });
-          
-        if (notificationError) {
-          console.error("Error creating notification:", notificationError);
-        }
-      }
 
-      toast.success("Review submitted successfully");
+      toast({
+        title: "Review Submitted",
+        description: "The grant has been successfully reviewed.",
+      });
+
       navigate("/applications");
     } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit the review. Please try again.",
+        variant: "destructive"
+      });
       console.error("Error submitting review:", error);
-      toast.error("Failed to submit review");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-au-purple" />
-      </div>
-    );
+    return <div className="flex justify-center items-center h-64">Loading grant details...</div>;
   }
 
-  if (!grant) {
-    return (
-      <div className="p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            Grant application not found. It may have been deleted or you don't have permission to view it.
-          </AlertDescription>
-        </Alert>
-        <div className="flex justify-center mt-6">
-          <Button onClick={() => navigate("/applications")}>
-            Return to Applications
-          </Button>
-        </div>
-      </div>
-    );
+  if (error || !grant) {
+    return <div className="text-red-500 p-4">Error loading grant: {(error as Error)?.message || "Grant not found"}</div>;
   }
 
-  const statusBadgeClass = () => {
-    switch (grant.status) {
-      case 'submitted': return "bg-blue-50 text-blue-700 border-blue-200";
-      case 'under_review': return "bg-amber-50 text-amber-700 border-amber-200";
-      default: return "bg-slate-50 text-slate-700 border-slate-200";
-    }
+  // Properly convert the data to match our Grant interface
+  const grantData: Grant = {
+    id: grant.id,
+    title: grant.title,
+    description: grant.description,
+    amount: grant.amount,
+    startDate: grant.start_date,
+    endDate: grant.end_date,
+    status: grant.status as GrantStatus,
+    category: grant.category as GrantCategory,
+    fundingSource: grant.funding_source as FundingSource,
+    submittedBy: grant.submitted_by,
+    submittedDate: grant.submitted_date,
+    researcherId: grant.researcher_id,
+    researcherName: grant.researcher_name,
+    department: grant.department,
+    reviewComments: grant.review_comments,
+    reviewedBy: grant.reviewed_by,
+    reviewedDate: grant.reviewed_date
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-2xl">Review Grant Application</CardTitle>
-              <CardDescription>Review and respond to this grant application</CardDescription>
-            </div>
-            <Badge variant="outline" className={statusBadgeClass()}>
-              {grant.status.replace(/_/g, " ").split(" ")
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(" ")}
-            </Badge>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-medium mb-2">Applicant Information</h3>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Name:</span>
-                  <p>{grant.researcherName || "Unknown"}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Department:</span>
-                  <p>{grant.department || "Not specified"}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Submitted:</span>
-                  <p>{safeFormatDate(grant.submittedDate)}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-lg font-medium mb-2">Grant Information</h3>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Amount Requested:</span>
-                  <p>{safeFormatNumber(grant.amount)}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Category:</span>
-                  <p>{grant.category ? (grant.category.charAt(0).toUpperCase() + grant.category.slice(1)) : "Not specified"}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Funding Source:</span>
-                  <p>{grant.fundingSource === "internal" ? "Internal" : "External"}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Duration:</span>
-                  <p>{safeFormatDate(grant.startDate)} - {safeFormatDate(grant.endDate)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <h3 className="text-lg font-medium mb-2">Project Details</h3>
-            <div className="space-y-4">
-              <div>
-                <span className="text-sm font-medium text-muted-foreground">Title:</span>
-                <p className="text-lg font-medium">{grant.title}</p>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-muted-foreground">Description:</span>
-                <p className="mt-1 whitespace-pre-wrap">{grant.description}</p>
-              </div>
-            </div>
-          </div>
-          
-          <Separator />
-          
-          <div>
-            <h3 className="text-lg font-medium mb-4">Review Decision</h3>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Decision</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select decision" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="approved">
-                            <div className="flex items-center">
-                              <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                              Approve
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="rejected">
-                            <div className="flex items-center">
-                              <XCircle className="h-4 w-4 mr-2 text-red-600" />
-                              Reject
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="modifications_requested">
-                            <div className="flex items-center">
-                              <AlertCircle className="h-4 w-4 mr-2 text-amber-600" />
-                              Request Modifications
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        {field.value === "approved" 
-                          ? "Approve this grant application and allocate the requested funds."
-                          : field.value === "rejected" 
-                          ? "Reject this application. The applicant will be notified."
-                          : "Request modifications before making a final decision."}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+    <div className="container mx-auto p-4">
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold mb-2">Grant Review: {grantData.title}</h1>
+        <p className="text-muted-foreground">
+          Submitted by {grantData.researcherName} on {new Date(grantData.submittedDate || "").toLocaleDateString()}
+        </p>
+      </div>
 
-                <FormField
-                  control={form.control}
-                  name="reviewComments"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Review Comments</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Provide detailed feedback on this application"
-                          className="h-32"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Your comments will be shared with the applicant.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Grant Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium">Description</h3>
+                  <p className="mt-1">{grantData.description}</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <h3 className="font-medium">Amount</h3>
+                    <p className="mt-1">${grantData.amount.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Category</h3>
+                    <p className="mt-1">{grantData.category}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">Funding Source</h3>
+                    <p className="mt-1">{grantData.fundingSource}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-medium">Start Date</h3>
+                    <p className="mt-1">{new Date(grantData.startDate).toLocaleDateString()}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-medium">End Date</h3>
+                    <p className="mt-1">{new Date(grantData.endDate).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium">Department</h3>
+                  <p className="mt-1">{grantData.department}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-                <div className="flex justify-end space-x-4">
-                  <Button type="button" variant="outline" onClick={() => navigate("/applications")}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Submit Review</CardTitle>
+              <CardDescription>Provide feedback and update the status of this grant application</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select 
+                    value={status} 
+                    onValueChange={(value) => setStatus(value as GrantStatus)}
                   >
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Submit Review
-                  </Button>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="under_review">Under Review</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="modifications_requested">Modifications Requested</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="comments">Review Comments</Label>
+                  <Textarea
+                    id="comments"
+                    placeholder="Enter your feedback or comments"
+                    value={reviewComments}
+                    onChange={(e) => setReviewComments(e.target.value)}
+                    rows={6}
+                    className="resize-none"
+                  />
+                </div>
+
+                <Button type="submit" className="w-full">Submit Review</Button>
               </form>
-            </Form>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default GrantReviewForm;
+}

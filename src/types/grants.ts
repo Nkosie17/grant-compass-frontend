@@ -1,4 +1,3 @@
-
 export type GrantStatus = 
   | "draft" 
   | "submitted" 
@@ -55,6 +54,11 @@ export interface Grant {
   reviewComments?: string;
   reviewedBy?: string;
   reviewedDate?: string;
+  // Adding the missing fields for dashboard functionality
+  activities?: any;
+  budget?: any;
+  studentParticipation?: any;
+  workPlan?: any;
 }
 
 export interface GrantOpportunity {
