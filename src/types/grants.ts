@@ -55,11 +55,6 @@ export interface Grant {
   reviewComments?: string;
   reviewedBy?: string;
   reviewedDate?: string;
-  // Additional fields for review components
-  activities?: string;
-  budget?: string;
-  studentParticipation?: string;
-  workPlan?: string;
 }
 
 export interface GrantOpportunity {
