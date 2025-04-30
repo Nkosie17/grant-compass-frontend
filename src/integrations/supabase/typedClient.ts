@@ -9,8 +9,9 @@ import type { Database } from '@/types/supabaseTypes';
 export const db = supabase;
 
 // Helper function to get a typed table reference - fixed type parameters
-export function useTable<T extends keyof Database['public']['Tables']>(
-  tableName: T
-) {
-  return supabase.from<Database['public']['Tables'][T]['Row']>(tableName);
+export function useTable<
+  TableName extends keyof Database['public']['Tables'],
+  RowType = Database['public']['Tables'][TableName]['Row']
+>(tableName: TableName) {
+  return supabase.from(tableName);
 }

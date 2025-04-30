@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/auth/useAuth";
 import { toast } from "sonner";
-import { Grant, GrantOpportunity, GrantCategory, FundingSource } from "@/types/grants";
+import { Grant, GrantOpportunity, GrantCategory, FundingSource, GrantStatus } from "@/types/grants";
 
 export function useGrantsData() {
   const [grants, setGrants] = useState<Grant[]>([]);
@@ -36,9 +35,9 @@ export function useGrantsData() {
         amount: grant.amount,
         startDate: grant.start_date,
         endDate: grant.end_date,
-        status: grant.status,
-        category: grant.category,
-        fundingSource: grant.funding_source,
+        status: grant.status as GrantStatus, // Add explicit type cast to GrantStatus
+        category: grant.category as GrantCategory, // Add explicit type cast
+        fundingSource: grant.funding_source as FundingSource, // Add explicit type cast
         submittedBy: grant.submitted_by,
         submittedDate: grant.submitted_date,
         reviewComments: grant.review_comments,
@@ -46,9 +45,7 @@ export function useGrantsData() {
         reviewedDate: grant.reviewed_date,
         researcherId: grant.researcher_id,
         researcherName: grant.researcher_name,
-        department: grant.department,
-        created_at: grant.created_at,
-        updated_at: grant.updated_at,
+        department: grant.department
       }));
       
       setGrants(transformedGrants);
@@ -137,9 +134,9 @@ export function useGrantsData() {
         amount: data[0].amount,
         startDate: data[0].start_date,
         endDate: data[0].end_date,
-        status: data[0].status,
-        category: data[0].category,
-        fundingSource: data[0].funding_source,
+        status: data[0].status as GrantStatus, // Add explicit type cast
+        category: data[0].category as GrantCategory, // Add explicit type cast
+        fundingSource: data[0].funding_source as FundingSource, // Add explicit type cast
         submittedBy: data[0].submitted_by,
         submittedDate: data[0].submitted_date,
         reviewComments: data[0].review_comments,
