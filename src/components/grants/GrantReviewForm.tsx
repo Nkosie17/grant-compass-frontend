@@ -55,6 +55,20 @@ const GrantReviewForm: React.FC = () => {
     },
   });
 
+  // Add safe formatter functions to handle potentially undefined values
+  const safeFormatNumber = (value: number | undefined | null) => {
+    if (value === undefined || value === null) {
+      return "$0";
+    }
+    return `$${value.toLocaleString()}`;
+  };
+
+  // Format date safely
+  const safeFormatDate = (dateString: string | undefined | null) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
+
   useEffect(() => {
     const fetchGrant = async () => {
       setIsLoading(true);
@@ -194,15 +208,15 @@ const GrantReviewForm: React.FC = () => {
               <div className="space-y-2">
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Name:</span>
-                  <p>{grant.researcherName}</p>
+                  <p>{grant.researcherName || "Unknown"}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Department:</span>
-                  <p>{grant.department}</p>
+                  <p>{grant.department || "Not specified"}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Submitted:</span>
-                  <p>{new Date(grant.submittedDate || "").toLocaleDateString()}</p>
+                  <p>{safeFormatDate(grant.submittedDate)}</p>
                 </div>
               </div>
             </div>
@@ -212,11 +226,11 @@ const GrantReviewForm: React.FC = () => {
               <div className="space-y-2">
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Amount Requested:</span>
-                  <p>${grant.amount.toLocaleString()}</p>
+                  <p>{safeFormatNumber(grant.amount)}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Category:</span>
-                  <p>{grant.category.charAt(0).toUpperCase() + grant.category.slice(1)}</p>
+                  <p>{grant.category ? (grant.category.charAt(0).toUpperCase() + grant.category.slice(1)) : "Not specified"}</p>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Funding Source:</span>
@@ -224,7 +238,7 @@ const GrantReviewForm: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Duration:</span>
-                  <p>{new Date(grant.startDate).toLocaleDateString()} - {new Date(grant.endDate).toLocaleDateString()}</p>
+                  <p>{safeFormatDate(grant.startDate)} - {safeFormatDate(grant.endDate)}</p>
                 </div>
               </div>
             </div>
