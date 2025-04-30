@@ -16,7 +16,8 @@ import {
   Filter, 
   Calendar, 
   ExternalLink, 
-  Megaphone 
+  Megaphone,
+  Loader2
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,28 +27,64 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { db } from "@/integrations/supabase/typedClient";
 
 const OpportunitiesList: React.FC = () => {
   const [opportunities, setOpportunities] = useState<GrantOpportunity[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // In a real app, this would be an API call to fetch opportunities
-    const fetchOpportunities = () => {
-      try {
-        // Get opportunities from localStorage for demo purposes
-        const storedOpportunities = JSON.parse(localStorage.getItem("au_gms_opportunities") || "[]");
-        setOpportunities(storedOpportunities);
-      } catch (error) {
-        console.error("Error fetching opportunities:", error);
-      }
-    };
-
     fetchOpportunities();
   }, []);
+
+  // Fetch opportunities from the database
+  const fetchOpportunities = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await db
+        .from('grant_opportunities')
+        .select('*')
+        .order('deadline', { ascending: true });
+      
+      if (error) throw error;
+      
+      // Transform data to match GrantOpportunity type
+      const transformedOpportunities: GrantOpportunity[] = data.map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        applicationUrl: item.application_url || "",
+        eligibility: item.eligibility,
+        fundingAmount: item.funding_amount,
+        fundingSource: item.funding_source as any,
+        category: item.category as any,
+        deadline: item.deadline,
+        postedBy: item.posted_by || "",
+        postedDate: item.posted_date,
+      }));
+      
+      setOpportunities(transformedOpportunities);
+    } catch (error: any) {
+      console.error("Error fetching opportunities:", error);
+      toast.error("Failed to load grant opportunities");
+      
+      // Fallback to localStorage for demo purposes
+      try {
+        const storedOpportunities = JSON.parse(localStorage.getItem("au_gms_opportunities") || "[]");
+        setOpportunities(storedOpportunities);
+      } catch (e) {
+        console.error("Error loading fallback opportunities:", e);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleApply = (opportunity: GrantOpportunity) => {
     if (opportunity.applicationUrl) {
@@ -144,7 +181,11 @@ const OpportunitiesList: React.FC = () => {
         </Select>
       </div>
 
-      {filteredOpportunities.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : filteredOpportunities.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredOpportunities.map(opportunity => (
             <Card key={opportunity.id} className="flex flex-col">

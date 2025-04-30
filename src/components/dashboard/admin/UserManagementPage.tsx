@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Filter, Plus, Search, UserPlus, Users, X, Loader2 } from "lucide-react";
+import { Filter, Plus, Search, UserPlus, Users, X, Loader2, Edit, UserCog } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import AddUserForm from "./AddUserForm";
@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { db } from "@/integrations/supabase/typedClient";
 
 type User = {
   id: string;
@@ -31,9 +32,117 @@ type User = {
   lastLogin: string;
 };
 
+type EditUserDialogProps = {
+  user: User;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: () => void;
+}
+
+const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, open, onOpenChange, onSave }) => {
+  const [name, setName] = useState(user.name);
+  const [role, setRole] = useState(user.role);
+  const [department, setDepartment] = useState(user.department || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Update user metadata in auth
+      const { error: authError } = await supabase.auth.admin.updateUserById(
+        user.id,
+        { user_metadata: { name, role, department } }
+      );
+      
+      if (authError) throw authError;
+      
+      // Also update the profile table if it exists
+      const { error: profileError } = await db
+        .from('profiles')
+        .update({
+          name,
+          role,
+          department
+        })
+        .eq('id', user.id);
+      
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        // Continue anyway as the auth update succeeded
+      }
+      
+      toast.success("User updated successfully");
+      onSave();
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error("Error updating user:", error);
+      toast.error(`Failed to update user: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>
+            Update user details and permissions.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          <div className="grid w-full items-center gap-2">
+            <label htmlFor="name" className="text-sm font-medium">Name</label>
+            <Input 
+              id="name" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="grid w-full items-center gap-2">
+            <label htmlFor="role" className="text-sm font-medium">Role</label>
+            <select 
+              id="role" 
+              value={role} 
+              onChange={(e) => setRole(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+              required
+            >
+              <option value="researcher">Researcher</option>
+              <option value="grant_office">Grant Office</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div className="grid w-full items-center gap-2">
+            <label htmlFor="department" className="text-sm font-medium">Department</label>
+            <Input 
+              id="department" 
+              value={department} 
+              onChange={(e) => setDepartment(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const UserManagementPage: React.FC = () => {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string | null>(null);
@@ -45,34 +154,38 @@ const UserManagementPage: React.FC = () => {
     fetchUsers();
   }, []);
   
+  // Function to fetch users from both auth API and profiles table
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const { data: { users }, error } = await supabase.auth.admin.listUsers();
+      // First try to get users from the auth API (requires admin role)
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
-      if (error) {
-        // Fallback to fetching only the current session if admin API fails
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData?.session) {
-          // If we at least have the current user's session, show that
-          const sessionUser = sessionData.session.user;
-          const userData: User = {
-            id: sessionUser.id,
-            name: sessionUser.user_metadata.name || 'Unknown User',
-            email: sessionUser.email || 'No Email',
-            role: sessionUser.user_metadata.role || 'researcher',
-            department: sessionUser.user_metadata.department || 'Unassigned',
-            status: 'active',
-            lastLogin: new Date(sessionUser.last_sign_in_at || '').toLocaleString() || 'Unknown',
-          };
-          setUsers([userData]);
-          console.log("Showing only current user due to permission restrictions:", userData);
-        } else {
-          throw new Error("Could not fetch user data");
+      // If that fails, fetch profiles from the database
+      if (authError) {
+        console.error("Error fetching users from auth API:", authError);
+        const { data: profilesData, error: profilesError } = await db
+          .from('profiles')
+          .select('*');
+          
+        if (profilesError) throw profilesError;
+        
+        if (profilesData) {
+          const transformedProfiles: User[] = profilesData.map(profile => ({
+            id: profile.id,
+            name: profile.name,
+            email: profile.email,
+            role: profile.role,
+            department: profile.department,
+            status: 'active', // Assume active since we can't determine from profiles alone
+            lastLogin: 'Unknown',
+          }));
+          
+          setUsers(transformedProfiles);
         }
-      } else if (users) {
-        // If admin API works, transform the full list
-        const transformedUsers: User[] = users.map(user => ({
+      } else if (authData?.users) {
+        // Transform the auth users data
+        const transformedUsers: User[] = authData.users.map(user => ({
           id: user.id,
           name: user.user_metadata?.name || user.email?.split('@')[0] || 'Unknown User',
           email: user.email || 'No Email',
@@ -126,6 +239,11 @@ const UserManagementPage: React.FC = () => {
     } else {
       setStatusFilter(null);
     }
+  };
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setIsEditUserOpen(true);
   };
 
   return (
@@ -278,7 +396,13 @@ const UserManagementPage: React.FC = () => {
                             </span>
                           </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleEditUser(user)}
+                              className="flex items-center gap-1"
+                            >
+                              <UserCog className="h-3.5 w-3.5 mr-1" />
                               Edit
                             </Button>
                           </TableCell>
@@ -303,6 +427,15 @@ const UserManagementPage: React.FC = () => {
           </CardContent>
         </Card>
       </Tabs>
+
+      {selectedUser && (
+        <EditUserDialog 
+          user={selectedUser}
+          open={isEditUserOpen}
+          onOpenChange={setIsEditUserOpen}
+          onSave={fetchUsers}
+        />
+      )}
     </div>
   );
 };
