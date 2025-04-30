@@ -1,6 +1,7 @@
-
 import React from "react"
-import { Link } from "react-router-dom"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
+import { useSession } from "next-auth/react"
 import { Home, GraduationCap, Briefcase, FileText, Users, Settings, PanelLeft } from "lucide-react"
 
 import { useSidebar } from "@/components/ui/sidebar"
@@ -28,7 +29,7 @@ export function AppSidebar() {
       {!open && (
         <button
           onClick={toggleSidebar}
-          className="fixed left-4 top-4 z-50 rounded-md bg-primary p-2 text-primary-foreground shadow-md hover:bg-primary/90"
+          className="fixed left-4 top-4 z-50 rounded-md bg-primary p-2 text-primary-foreground shadow-md hover:bg-primary/90 md:hidden"
           aria-label="Open Sidebar"
         >
           <PanelLeft className="h-5 w-5" />
@@ -37,7 +38,7 @@ export function AppSidebar() {
       
       <Sidebar>
         <SidebarHeader>
-          <Link to="/" className="pl-2 font-bold">
+          <Link href="/" className="pl-2 font-bold">
             AU GMS
           </Link>
         </SidebarHeader>
@@ -47,7 +48,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/dashboard">
+                  <Link href="/dashboard">
                     <Home className="mr-2 h-4 w-4" />
                     <span>Home</span>
                   </Link>
@@ -61,7 +62,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/applications">
+                  <Link href="/applications">
                     <FileText className="mr-2 h-4 w-4" />
                     <span>Applications</span>
                   </Link>
@@ -69,7 +70,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/opportunities">
+                  <Link href="/opportunities">
                     <GraduationCap className="mr-2 h-4 w-4" />
                     <span>Opportunities</span>
                   </Link>
@@ -83,7 +84,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/users">
+                  <Link href="/users">
                     <Users className="mr-2 h-4 w-4" />
                     <span>Users</span>
                   </Link>
@@ -91,7 +92,7 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/departments">
+                  <Link href="/departments">
                     <Briefcase className="mr-2 h-4 w-4" />
                     <span>Departments</span>
                   </Link>
@@ -106,7 +107,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link to="/settings">
+                  <Link href="/settings">
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </Link>
