@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart2, CheckCircle, Clock, FileText, AlertCircle } from "lucide-react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import { supabase } from "@/integrations/supabase/client";
-import { Grant } from "@/types/grants";
+import { Grant, GrantStatus } from "@/types/grants";
 
 const GrantOfficeDashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
@@ -37,7 +38,7 @@ const GrantOfficeDashboard: React.FC = () => {
             amount: grant.amount,
             startDate: grant.start_date,
             endDate: grant.end_date,
-            status: grant.status,
+            status: grant.status as GrantStatus,
             category: grant.category,
             fundingSource: grant.funding_source,
             submittedBy: grant.submitted_by,
@@ -48,6 +49,11 @@ const GrantOfficeDashboard: React.FC = () => {
             reviewComments: grant.review_comments,
             reviewedBy: grant.reviewed_by,
             reviewedDate: grant.reviewed_date,
+            // Map the additional properties safely with optional chaining
+            activities: grant.activities || undefined,
+            budget: grant.budget || undefined,
+            studentParticipation: grant.student_participation || undefined,
+            workPlan: grant.work_plan || undefined
           }));
 
           // Filter pending applications
