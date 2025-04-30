@@ -1,36 +1,89 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ALL_GRANTS } from "@/data/mockData";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart2, CheckCircle, Clock, FileText, AlertCircle } from "lucide-react";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import { supabase } from "@/integrations/supabase/client";
+import { Grant } from "@/types/grants";
 
 const GrantOfficeDashboard: React.FC = () => {
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [pendingApplications, setPendingApplications] = useState<Grant[]>([]);
+  const [approvedApplications, setPendingApproved] = useState<Grant[]>([]);
+  const [totalActiveFunding, setTotalActiveFunding] = useState<number>(0);
+  const [needsAttention, setNeedsAttention] = useState<Grant[]>([]);
   
-  const pendingApplications = ALL_GRANTS.filter(grant => 
-    grant.status === "submitted" || grant.status === "under_review"
-  );
-  
-  const recentApprovals = ALL_GRANTS.filter(grant => 
-    grant.status === "approved" || grant.status === "active"
-  ).sort((a, b) => new Date(b.submittedDate || "").getTime() - new Date(a.submittedDate || "").getTime()).slice(0, 5);
-  
-  const needsAttention = ALL_GRANTS.filter(grant => 
-    grant.status === "modifications_requested"
-  );
+  useEffect(() => {
+    const fetchGrants = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch grants from Supabase
+        const { data: grantsData, error } = await supabase
+          .from('grants')
+          .select('*')
+          .order('submitted_date', { ascending: false });
+          
+        if (error) throw error;
+        
+        if (grantsData) {
+          // Transform the data to match the Grant type
+          const grants: Grant[] = grantsData.map(grant => ({
+            id: grant.id,
+            title: grant.title,
+            description: grant.description,
+            amount: grant.amount,
+            startDate: grant.start_date,
+            endDate: grant.end_date,
+            status: grant.status,
+            category: grant.category,
+            fundingSource: grant.funding_source,
+            submittedBy: grant.submitted_by,
+            submittedDate: grant.submitted_date,
+            researcherId: grant.researcher_id,
+            researcherName: grant.researcher_name,
+            department: grant.department,
+            reviewComments: grant.review_comments,
+            reviewedBy: grant.reviewed_by,
+            reviewedDate: grant.reviewed_date,
+          }));
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+          // Filter pending applications
+          const pending = grants.filter(grant => 
+            grant.status === "submitted" || grant.status === "under_review"
+          );
+          setPendingApplications(pending);
+          
+          // Filter approved applications
+          const approved = grants.filter(grant => 
+            grant.status === "approved" || grant.status === "active"
+          );
+          setPendingApproved(approved);
+          
+          // Calculate total active funding
+          const activeFunding = grants
+            .filter(grant => grant.status === "active")
+            .reduce((total, grant) => total + (grant.amount || 0), 0);
+            
+          setTotalActiveFunding(activeFunding);
+          
+          // Filter needs attention
+          const attention = grants.filter(grant => 
+            grant.status === "modifications_requested"
+          );
+          setNeedsAttention(attention);
+        }
+      } catch (error) {
+        console.error("Error fetching grants:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchGrants();
+  }, []);
   
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -64,6 +117,15 @@ const GrantOfficeDashboard: React.FC = () => {
     }
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+  
   return (
     <div className="flex flex-col min-h-screen">
       <DashboardHeader 
@@ -94,8 +156,7 @@ const GrantOfficeDashboard: React.FC = () => {
             <CardContent>
               <div className="text-3xl font-bold">
                 {
-                  ALL_GRANTS.filter(grant => 
-                    (grant.status === "approved" || grant.status === "active") &&
+                  approvedApplications.filter(grant => 
                     new Date(grant.submittedDate || "").getMonth() === new Date().getMonth()
                   ).length
                 }
@@ -111,11 +172,12 @@ const GrantOfficeDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {formatCurrency(
-                  ALL_GRANTS
-                    .filter(grant => grant.status === "active")
-                    .reduce((total, grant) => total + grant.amount, 0)
-                )}
+                {new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD',
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                }).format(totalActiveFunding)}
               </div>
             </CardContent>
           </Card>
@@ -203,9 +265,9 @@ const GrantOfficeDashboard: React.FC = () => {
                 <CardDescription>Recently approved grant applications</CardDescription>
               </CardHeader>
               <CardContent>
-                {recentApprovals.length > 0 ? (
+                {approvedApplications.length > 0 ? (
                   <div className="space-y-4">
-                    {recentApprovals.map((grant) => (
+                    {approvedApplications.map((grant) => (
                       <div
                         key={grant.id}
                         className="border rounded-lg p-4 hover:bg-au-neutral-50 transition-colors"

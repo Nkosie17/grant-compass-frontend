@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -7,6 +6,7 @@ import * as z from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Grant, GrantStatus } from "@/types/grants";
+import { supabase } from "@/integrations/supabase/client";
 
 import {
   Form,
@@ -46,6 +46,7 @@ const GrantReviewForm: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [grant, setGrant] = useState<Grant | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewFormSchema),
@@ -73,20 +74,48 @@ const GrantReviewForm: React.FC = () => {
     const fetchGrant = async () => {
       setIsLoading(true);
       try {
-        // In a real app, this would be an API call to fetch the grant by ID
-        const storedGrants = JSON.parse(localStorage.getItem("au_gms_grants") || "[]");
-        const foundGrant = storedGrants.find((g: Grant) => g.id === grantId);
+        if (!grantId) return;
         
-        if (!foundGrant) {
+        // Fetch grant from Supabase
+        const { data, error } = await supabase
+          .from('grants')
+          .select('*')
+          .eq('id', grantId)
+          .single();
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Transform the data to match the Grant type
+          const grantData: Grant = {
+            id: data.id,
+            title: data.title,
+            description: data.description,
+            amount: data.amount,
+            startDate: data.start_date,
+            endDate: data.end_date,
+            status: data.status,
+            category: data.category,
+            fundingSource: data.funding_source,
+            submittedBy: data.submitted_by,
+            submittedDate: data.submitted_date,
+            researcherId: data.researcher_id,
+            researcherName: data.researcher_name,
+            department: data.department,
+            reviewComments: data.review_comments,
+            reviewedBy: data.reviewed_by,
+            reviewedDate: data.reviewed_date,
+          };
+          
+          setGrant(grantData);
+        } else {
           toast.error("Grant application not found");
           navigate("/applications");
-          return;
         }
-        
-        setGrant(foundGrant);
       } catch (error) {
         console.error("Error fetching grant:", error);
         toast.error("Failed to load grant application");
+        navigate("/applications");
       } finally {
         setIsLoading(false);
       }
@@ -98,54 +127,49 @@ const GrantReviewForm: React.FC = () => {
   }, [grantId, navigate]);
 
   const onSubmit = async (data: ReviewFormValues) => {
-    if (!grant) return;
+    if (!grant || !user) return;
     
     try {
-      // Update the grant status and review information
-      const updatedGrant = {
-        ...grant,
-        status: data.status as GrantStatus,
-        reviewComments: data.reviewComments,
-        reviewedBy: user?.id,
-        reviewedDate: new Date().toISOString(),
-      };
+      setIsSubmitting(true);
+      
+      // Update the grant status and review information in Supabase
+      const { error } = await supabase
+        .from('grants')
+        .update({
+          status: data.status,
+          review_comments: data.reviewComments,
+          reviewed_by: user.id,
+          reviewed_date: new Date().toISOString(),
+        })
+        .eq('id', grant.id);
 
-      // In a real app, this would be an API call to update the grant
-      console.log("Updating grant:", updatedGrant);
-
-      // Simulate an API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Update in localStorage for demo purposes
-      const storedGrants = JSON.parse(localStorage.getItem("au_gms_grants") || "[]");
-      const updatedGrants = storedGrants.map((g: Grant) => 
-        g.id === updatedGrant.id ? updatedGrant : g
-      );
-      localStorage.setItem("au_gms_grants", JSON.stringify(updatedGrants));
-
+      if (error) throw error;
+      
       // Create a notification for the researcher
-      const notification = {
-        id: `notification_${Date.now().toString()}`,
-        userId: grant.researcherId,
-        message: `Your grant application "${grant.title}" has been ${data.status.replace(/_/g, " ")}`,
-        type: "status_update" as const,
-        relatedId: grant.id,
-        isRead: false,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Store notification in localStorage
-      const storedNotifications = JSON.parse(localStorage.getItem("au_gms_notifications") || "[]");
-      localStorage.setItem(
-        "au_gms_notifications", 
-        JSON.stringify([...storedNotifications, notification])
-      );
+      if (grant.researcherId) {
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: grant.researcherId,
+            message: `Your grant application "${grant.title}" has been ${data.status.replace(/_/g, " ")}`,
+            type: "status_update",
+            related_id: grant.id,
+            related_type: "grant",
+            is_read: false,
+          });
+          
+        if (notificationError) {
+          console.error("Error creating notification:", notificationError);
+        }
+      }
 
       toast.success("Review submitted successfully");
       navigate("/applications");
     } catch (error) {
       console.error("Error submitting review:", error);
       toast.error("Failed to submit review");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -337,7 +361,13 @@ const GrantReviewForm: React.FC = () => {
                   <Button type="button" variant="outline" onClick={() => navigate("/applications")}>
                     Cancel
                   </Button>
-                  <Button type="submit">Submit Review</Button>
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Submit Review
+                  </Button>
                 </div>
               </form>
             </Form>
