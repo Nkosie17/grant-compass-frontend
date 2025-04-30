@@ -20,6 +20,19 @@ const statusColors: Record<GrantStatus, string> = {
   completed: "bg-teal-50 text-teal-700 border-teal-200"
 };
 
+// Add these utility functions to safely handle potentially undefined values
+const safeFormatNumber = (value: number | undefined | null): string => {
+  if (value === undefined || value === null) {
+    return "$0";
+  }
+  return `$${value.toLocaleString()}`;
+};
+
+const safeFormatDate = (dateString: string | undefined | null): string => {
+  if (!dateString) return "N/A";
+  return new Date(dateString).toLocaleDateString();
+};
+
 const ApplicationsPage: React.FC = () => {
   const [applications, setApplications] = useState<Grant[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,10 +44,13 @@ const ApplicationsPage: React.FC = () => {
       try {
         // Get grants from localStorage for demo purposes
         const storedGrants = JSON.parse(localStorage.getItem("au_gms_grants") || "[]");
-        // Only show submitted applications, not drafts
-        const submittedGrants = storedGrants.filter((grant: Grant) => 
-          grant.status !== "draft"
-        );
+        // Only show submitted applications, not drafts and ensure proper types
+        const submittedGrants: Grant[] = storedGrants
+          .filter((grant: any) => grant.status !== "draft")
+          .map((grant: any) => ({
+            ...grant,
+            status: grant.status as GrantStatus,
+          }));
         
         setApplications(submittedGrants);
       } catch (error) {
@@ -80,20 +96,6 @@ const ApplicationsPage: React.FC = () => {
       default:
         return filteredApplications;
     }
-  };
-
-  // Add a safe formatter function to handle potentially undefined values
-  const safeFormatNumber = (value: number | undefined | null) => {
-    if (value === undefined || value === null) {
-      return "$0";
-    }
-    return `$${value.toLocaleString()}`;
-  };
-
-  // Format date safely
-  const safeFormatDate = (dateString: string | undefined | null) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
   };
 
   return (
