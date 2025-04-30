@@ -82,6 +82,20 @@ const ApplicationsPage: React.FC = () => {
     }
   };
 
+  // Add a safe formatter function to handle potentially undefined values
+  const safeFormatNumber = (value: number | undefined | null) => {
+    if (value === undefined || value === null) {
+      return "$0";
+    }
+    return `$${value.toLocaleString()}`;
+  };
+
+  // Format date safely
+  const safeFormatDate = (dateString: string | undefined | null) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -148,7 +162,7 @@ const ApplicationsPage: React.FC = () => {
                           <div>
                             <div className="font-medium">{app.title}</div>
                             <div className="text-xs text-muted-foreground">
-                              {app.department} • {app.category.charAt(0).toUpperCase() + app.category.slice(1)}
+                              {app.department || "No Department"} • {app.category.charAt(0).toUpperCase() + app.category.slice(1)}
                             </div>
                           </div>
                         </div>
@@ -159,13 +173,13 @@ const ApplicationsPage: React.FC = () => {
                               {app.researcherName ? app.researcherName.charAt(0) : "U"}
                             </AvatarFallback>
                           </Avatar>
-                          <span>{app.researcherName}</span>
+                          <span>{app.researcherName || "Unknown"}</span>
                         </div>
                         <div className="col-span-1">
-                          ${app.amount.toLocaleString()}
+                          {safeFormatNumber(app.amount)}
                         </div>
                         <div className="col-span-2">
-                          {app.submittedDate ? new Date(app.submittedDate).toLocaleDateString() : "N/A"}
+                          {safeFormatDate(app.submittedDate)}
                         </div>
                         <div className="col-span-2">
                           <div className="flex items-center gap-2">
