@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,7 +35,9 @@ const MyGrants: React.FC = () => {
         const storedGrants = JSON.parse(localStorage.getItem("au_gms_grants") || "[]");
         
         // Filter grants to show only those belonging to the current user
-        const userGrants = storedGrants.filter((grant: Grant) => grant.researcherId === user?.id);
+        const userGrants = storedGrants.filter(
+          (grant: Grant) => grant.researcherId === user?.id
+        );
         
         setGrants(userGrants);
       } catch (error) {
@@ -81,6 +82,14 @@ const MyGrants: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  // Add a safe formatter function to handle potentially undefined values
+  const safeFormatNumber = (value: number | undefined | null) => {
+    if (value === undefined || value === null) {
+      return "$0";
+    }
+    return `$${value.toLocaleString()}`;
   };
 
   return (
@@ -165,14 +174,14 @@ const MyGrants: React.FC = () => {
                             </div>
                           </div>
                           <div className="col-span-2 flex items-center">
-                            ${grant.amount.toLocaleString()}
+                            {safeFormatNumber(grant.amount)}
                           </div>
                           <div className="col-span-2 flex flex-col justify-center">
                             <div className="text-xs">
-                              {new Date(grant.startDate).toLocaleDateString()} - 
+                              {grant.startDate ? new Date(grant.startDate).toLocaleDateString() : 'N/A'} - 
                             </div>
                             <div className="text-xs">
-                              {new Date(grant.endDate).toLocaleDateString()}
+                              {grant.endDate ? new Date(grant.endDate).toLocaleDateString() : 'N/A'}
                             </div>
                           </div>
                           <div className="col-span-3 flex items-center gap-2">
@@ -235,7 +244,7 @@ const MyGrants: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Amount</h3>
-                  <p className="font-medium">${selectedGrant.amount.toLocaleString()}</p>
+                  <p className="font-medium">{safeFormatNumber(selectedGrant.amount)}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Category</h3>
@@ -247,7 +256,7 @@ const MyGrants: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Department</h3>
-                  <p>{selectedGrant.department}</p>
+                  <p>{selectedGrant.department || 'N/A'}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Submitted Date</h3>
@@ -255,11 +264,11 @@ const MyGrants: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Project Start</h3>
-                  <p>{formatDate(selectedGrant.startDate)}</p>
+                  <p>{selectedGrant.startDate ? formatDate(selectedGrant.startDate) : 'N/A'}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Project End</h3>
-                  <p>{formatDate(selectedGrant.endDate)}</p>
+                  <p>{selectedGrant.endDate ? formatDate(selectedGrant.endDate) : 'N/A'}</p>
                 </div>
               </div>
 
