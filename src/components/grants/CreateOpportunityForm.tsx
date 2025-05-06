@@ -53,21 +53,40 @@ type FormValues = z.infer<typeof formSchema>;
 
 const sendNewOpportunityNotification = async (opportunityId: string, opportunityTitle: string) => {
   try {
-    // Create notification in Supabase for all researchers
-    await supabase
-      .from("notifications")
-      .insert({
-        user_id: "all", // Special value to indicate all users should see this
-        message: `New grant opportunity: ${opportunityTitle}`,
-        type: "opportunity",
-        is_read: false,
-        related_id: opportunityId,
-        related_type: "opportunity"
-      });
+    // Get all researchers
+    const { data: researchers, error: researchersError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("role", "researcher");
+      
+    if (researchersError) {
+      console.error("Error fetching researchers:", researchersError);
+      throw researchersError;
+    }
     
-    toast.success("Notification sent to all researchers about the new opportunity!");
+    // Create notification for each researcher
+    const notifications = researchers.map(researcher => ({
+      user_id: researcher.id,
+      message: `New grant opportunity: ${opportunityTitle}`,
+      type: "opportunity",
+      is_read: false,
+      related_id: opportunityId,
+      related_type: "opportunity",
+      created_at: new Date().toISOString()
+    }));
+    
+    if (notifications.length > 0) {
+      const { error } = await supabase
+        .from("notifications")
+        .insert(notifications);
+        
+      if (error) throw error;
+    }
+    
+    toast.success(`Notifications sent to ${researchers.length} researchers!`);
   } catch (error) {
-    console.error("Error sending notification:", error);
+    console.error("Error sending notifications:", error);
+    toast.error("Could not send notifications to researchers");
   }
 };
 
@@ -109,7 +128,7 @@ const CreateOpportunityForm = () => {
 
       if (error) throw error;
 
-      // Send notification about the new opportunity
+      // Send notification about the new opportunity to all researchers
       if (opportunity) {
         await sendNewOpportunityNotification(opportunity.id, opportunity.title);
       }
