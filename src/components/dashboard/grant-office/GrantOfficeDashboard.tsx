@@ -64,6 +64,11 @@ const GrantOfficeDashboard: React.FC = () => {
     }
   };
 
+  // Helper function to safely access potentially undefined properties
+  const getPropertyValue = (grant: any, propertyName: string, defaultValue: any = "Not provided") => {
+    return grant[propertyName] !== undefined ? grant[propertyName] : defaultValue;
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <DashboardHeader 
@@ -114,7 +119,11 @@ const GrantOfficeDashboard: React.FC = () => {
                 {formatCurrency(
                   ALL_GRANTS
                     .filter(grant => grant.status === "active")
-                    .reduce((total, grant) => total + grant.amount, 0)
+                    .reduce((total, grant) => {
+                      // Handle potential undefined amount
+                      const grantAmount = typeof grant.amount === 'number' ? grant.amount : 0;
+                      return total + grantAmount;
+                    }, 0)
                 )}
               </div>
             </CardContent>
@@ -170,7 +179,7 @@ const GrantOfficeDashboard: React.FC = () => {
                         </div>
                         <div className="flex justify-between items-center mt-4">
                           <div>
-                            <span className="text-sm font-medium">{formatCurrency(grant.amount)}</span>
+                            <span className="text-sm font-medium">{formatCurrency(grant.amount || 0)}</span>
                             <span className="text-xs text-muted-foreground ml-2">
                               Submitted by: {grant.submittedBy} on {grant.submittedDate}
                             </span>
@@ -221,7 +230,7 @@ const GrantOfficeDashboard: React.FC = () => {
                         </div>
                         <div className="flex justify-between items-center mt-4">
                           <div>
-                            <span className="text-sm font-medium">{formatCurrency(grant.amount)}</span>
+                            <span className="text-sm font-medium">{formatCurrency(grant.amount || 0)}</span>
                             <span className="text-xs text-muted-foreground ml-2">
                               {grant.startDate} - {grant.endDate}
                             </span>
@@ -266,11 +275,15 @@ const GrantOfficeDashboard: React.FC = () => {
                           </span>
                         </div>
                         <div className="text-sm text-muted-foreground mb-4">
-                          Budget issues need to be addressed before approval can proceed.
+                          {/* Use the helper function to safely access potentially undefined properties */}
+                          <p>Activities: {getPropertyValue(grant, 'activities', []).join(', ') || 'None provided'}</p>
+                          <p>Budget: {typeof getPropertyValue(grant, 'budget') === 'object' ? 'Provided' : 'Not provided'}</p>
+                          <p>Student Participation: {getPropertyValue(grant, 'student_participation', false) ? 'Yes' : 'No'}</p>
+                          <p>Work Plan: {getPropertyValue(grant, 'work_plan', 'Not provided')}</p>
                         </div>
                         <div className="flex justify-between items-center">
                           <div>
-                            <span className="text-sm font-medium">{formatCurrency(grant.amount)}</span>
+                            <span className="text-sm font-medium">{formatCurrency(grant.amount || 0)}</span>
                             <span className="text-xs text-muted-foreground ml-2">
                               Submitted by: {grant.submittedBy}
                             </span>

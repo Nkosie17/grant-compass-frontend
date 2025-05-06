@@ -55,6 +55,11 @@ export interface Grant {
   reviewComments?: string;
   reviewedBy?: string;
   reviewedDate?: string;
+  // Add the missing properties
+  activities?: string[];
+  budget?: Record<string, number>;
+  student_participation?: boolean;
+  work_plan?: string;
 }
 
 export interface GrantOpportunity {
@@ -101,5 +106,5 @@ export interface IPItem {
   grantId: string;
   researchers: string[];
   status: string;
-  description?: string; // Added description field
+  description?: string;
 }
