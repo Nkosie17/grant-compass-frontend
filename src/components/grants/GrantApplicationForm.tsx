@@ -1,23 +1,13 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useAuth } from "@/contexts/auth/useAuth";
-import { useGrantsData } from "@/hooks/useGrantsData";
 import { toast } from "sonner";
-import { FundingSource, GrantCategory } from "@/types/grants";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, CheckCircle2 } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { GrantCategory, FundingSource } from "@/types/grants";
+import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 
 import {
   Form,
@@ -28,6 +18,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -35,236 +36,417 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const formSchema = z.object({
-  title: z.string().min(5, { message: "Title must be at least 5 characters" }),
-  description: z.string().min(20, { message: "Description must be at least 20 characters" }),
-  category: z.string(),
-  fundingSource: z.string(),
-  amount: z.coerce.number().positive({ message: "Amount must be positive" }),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  studentParticipation: z.boolean().default(false),
-  workPlan: z.string().min(50, { message: "Work plan must be at least 50 characters" }).optional(),
-  
-  // Budget items
-  facultySalary: z.coerce.number().min(0).default(0),
-  staffSalary: z.coerce.number().min(0).default(0),
-  studentStipends: z.coerce.number().min(0).default(0),
-  equipment: z.coerce.number().min(0).default(0),
-  supplies: z.coerce.number().min(0).default(0),
-  travel: z.coerce.number().min(0).default(0),
-  other: z.coerce.number().min(0).default(0),
-});
+const currentYear = new Date().getFullYear();
+const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear + i);
 
-const steps = [
-  { id: 'basic-info', title: 'Basic Information' },
-  { id: 'details', title: 'Project Details' },
-  { id: 'budget', title: 'Budget' },
-  { id: 'review', title: 'Review & Submit' }
+const collegeOptions = [
+  "College of Business, Peace, Leadership and Governance",
+  "College of Health, Agriculture and Natural Sciences",
+  "College of Social Sciences, Theology, Humanities and Education",
 ];
 
-const GrantApplicationForm = () => {
+const formSchema = z.object({
+  title: z.string().min(5, "Study title must be at least 5 characters"),
+  piName: z.string().min(2, "Principal Investigator name is required"),
+  collegeName: z.string().min(2, "College name is required"),
+  yearOfApplication: z.string().min(4, "Year of application is required"),
+  statementOfPurpose: z.string().max(200, "Statement of purpose should be limited to 2 sentences"),
+  background: z.string().max(5000, "Background should be limited to approximately 500 words"),
+  broadObjective: z.string().max(200, "Broad objective should be limited to 2 sentences"),
+  specificObjectives: z.array(
+    z.object({
+      objective: z.string().min(1, "Specific objective is required")
+    })
+  ).min(1, "At least one specific objective is required"),
+  literatureReview: z.string().max(7500, "Literature review should be limited to approximately 750 words"),
+  activities: z.array(
+    z.object({
+      milestoneNumber: z.string().min(1, "Milestone number is required"),
+      activityDescription: z.string().min(1, "Activity description is required"),
+      milestoneDeliverable: z.string().min(1, "Milestone deliverable is required"),
+      estimatedTime: z.string().min(1, "Estimated time is required"),
+      technicalApproval: z.boolean().optional(),
+      paymentAmount: z.string().min(1, "Payment amount is required")
+    })
+  ).min(1, "At least one activity is required"),
+  expectedOutcomes: z.array(
+    z.object({
+      outcome: z.string().min(1, "Expected outcome is required")
+    })
+  ).min(1, "At least one expected outcome is required"),
+  monitoringEvaluation: z.string().min(1, "Monitoring and evaluation plan is required"),
+  indicators: z.array(
+    z.object({
+      indicator: z.string().min(1, "Indicator is required")
+    })
+  ).optional(),
+  budgetItems: z.array(
+    z.object({
+      budgetNumber: z.string().min(1, "Budget number is required"),
+      activity: z.string().min(1, "Activity is required"),
+      duration: z.string().min(1, "Duration is required"),
+      responsibility: z.string().min(1, "Responsibility is required"),
+      quantity: z.string().min(1, "Quantity is required"),
+      frequency: z.string().min(1, "Frequency is required"),
+      unitCost: z.string().min(1, "Unit cost is required"),
+      unitType: z.string().min(1, "Unit type is required"),
+      budgetNotes: z.string().optional()
+    })
+  ).min(1, "At least one budget item is required"),
+  studentParticipation: z.array(
+    z.object({
+      college: z.string().min(1, "College is required"),
+      department: z.string().min(1, "Department is required"),
+      studentName: z.string().min(1, "Student name is required"),
+      role: z.string().min(1, "Role in project is required"),
+      studentNumber: z.string().min(1, "Student number is required"),
+      programme: z.string().min(1, "Programme is required")
+    })
+  ).optional(),
+  workPlan: z.array(
+    z.object({
+      activity: z.string().min(1, "Activity is required"),
+      months: z.array(z.boolean()).length(12, "All 12 months must be specified")
+    })
+  ).min(1, "At least one work plan item is required"),
+  references: z.array(
+    z.object({
+      reference: z.string().min(1, "Reference is required")
+    })
+  ).min(1, "At least one reference is required"),
+  category: z.enum(["research", "education", "community", "infrastructure", "innovation"] as const),
+  fundingSource: z.enum(["internal", "external"] as const),
+});
+
+type FormValues = z.infer<typeof formSchema>;
+
+const GrantApplicationForm: React.FC = () => {
   const { user } = useAuth();
-  const { submitGrantApplication } = useGrantsData();
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  
-  const form = useForm<z.infer<typeof formSchema>>({
+  const [activeTab, setActiveTab] = useState("basic");
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      description: "",
+      piName: user?.name || "",
+      collegeName: "",
+      yearOfApplication: currentYear.toString(),
+      statementOfPurpose: "",
+      background: "",
+      broadObjective: "",
+      specificObjectives: [{ objective: "" }],
+      literatureReview: "",
+      activities: [{ milestoneNumber: "1", activityDescription: "", milestoneDeliverable: "", estimatedTime: "", technicalApproval: false, paymentAmount: "" }],
+      expectedOutcomes: [{ outcome: "" }],
+      monitoringEvaluation: "",
+      indicators: [{ indicator: "" }],
+      budgetItems: [{ budgetNumber: "1", activity: "", duration: "", responsibility: "", quantity: "", frequency: "", unitCost: "", unitType: "", budgetNotes: "" }],
+      studentParticipation: [{ college: "", department: "", studentName: "", role: "", studentNumber: "", programme: "" }],
+      workPlan: [{ activity: "", months: Array(12).fill(false) }],
+      references: [{ reference: "" }],
       category: "research",
       fundingSource: "internal",
-      amount: 0,
-      studentParticipation: false,
-      facultySalary: 0,
-      staffSalary: 0,
-      studentStipends: 0,
-      equipment: 0,
-      supplies: 0,
-      travel: 0,
-      other: 0,
-      workPlan: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user) {
-      toast.error("You must be logged in to submit a grant application");
-      return;
+  const { fields: specificObjectivesFields, append: appendSpecificObjective, remove: removeSpecificObjective } = useFieldArray({
+    control: form.control,
+    name: "specificObjectives",
+  });
+
+  const { fields: activitiesFields, append: appendActivity, remove: removeActivity } = useFieldArray({
+    control: form.control,
+    name: "activities",
+  });
+
+  const { fields: expectedOutcomesFields, append: appendExpectedOutcome, remove: removeExpectedOutcome } = useFieldArray({
+    control: form.control,
+    name: "expectedOutcomes",
+  });
+
+  const { fields: indicatorsFields, append: appendIndicator, remove: removeIndicator } = useFieldArray({
+    control: form.control,
+    name: "indicators",
+  });
+
+  const { fields: budgetItemsFields, append: appendBudgetItem, remove: removeBudgetItem } = useFieldArray({
+    control: form.control,
+    name: "budgetItems",
+  });
+
+  const { fields: studentParticipationFields, append: appendStudentParticipation, remove: removeStudentParticipation } = useFieldArray({
+    control: form.control,
+    name: "studentParticipation",
+  });
+
+  const { fields: workPlanFields, append: appendWorkPlan, remove: removeWorkPlan } = useFieldArray({
+    control: form.control,
+    name: "workPlan",
+  });
+
+  const { fields: referencesFields, append: appendReference, remove: removeReference } = useFieldArray({
+    control: form.control,
+    name: "references",
+  });
+
+  const moveToNextTab = () => {
+    switch (activeTab) {
+      case "basic":
+        setActiveTab("objectives");
+        break;
+      case "objectives":
+        setActiveTab("literature");
+        break;
+      case "literature":
+        setActiveTab("activities");
+        break;
+      case "activities":
+        setActiveTab("outcomes");
+        break;
+      case "outcomes":
+        setActiveTab("budget");
+        break;
+      case "budget":
+        setActiveTab("students");
+        break;
+      case "students":
+        setActiveTab("workplan");
+        break;
+      case "workplan":
+        setActiveTab("references");
+        break;
+      default:
+        break;
     }
-    
+  };
+
+  const moveToPreviousTab = () => {
+    switch (activeTab) {
+      case "objectives":
+        setActiveTab("basic");
+        break;
+      case "literature":
+        setActiveTab("objectives");
+        break;
+      case "activities":
+        setActiveTab("literature");
+        break;
+      case "outcomes":
+        setActiveTab("activities");
+        break;
+      case "budget":
+        setActiveTab("outcomes");
+        break;
+      case "students":
+        setActiveTab("budget");
+        break;
+      case "workplan":
+        setActiveTab("students");
+        break;
+      case "references":
+        setActiveTab("workplan");
+        break;
+      default:
+        break;
+    }
+  };
+
+  const calculateProgress = () => {
+    const totalSteps = 8;
+    const currentStep = ["basic", "objectives", "literature", "activities", "outcomes", "budget", "students", "workplan", "references"].indexOf(activeTab) + 1;
+    return (currentStep / totalSteps) * 100;
+  };
+
+  const onSubmit = async (data: FormValues) => {
     try {
-      setIsSubmitting(true);
-      
-      // Prepare budget object
-      const budget = {
-        facultySalary: values.facultySalary,
-        staffSalary: values.staffSalary,
-        studentStipends: values.studentStipends,
-        equipment: values.equipment,
-        supplies: values.supplies,
-        travel: values.travel,
-        other: values.other
+      // Generate a unique ID for the grant
+      const grantId = `grant_${Date.now().toString()}`;
+
+      // Create the grant object
+      const grant = {
+        id: grantId,
+        title: data.title,
+        piName: data.piName,
+        collegeName: data.collegeName,
+        yearOfApplication: data.yearOfApplication,
+        statementOfPurpose: data.statementOfPurpose,
+        background: data.background,
+        broadObjective: data.broadObjective,
+        specificObjectives: data.specificObjectives,
+        literatureReview: data.literatureReview,
+        activities: data.activities,
+        expectedOutcomes: data.expectedOutcomes,
+        monitoringEvaluation: data.monitoringEvaluation,
+        indicators: data.indicators || [],
+        budgetItems: data.budgetItems,
+        studentParticipation: data.studentParticipation || [],
+        workPlan: data.workPlan,
+        references: data.references,
+        status: "submitted" as const,
+        category: data.category as GrantCategory,
+        fundingSource: data.fundingSource as FundingSource,
+        submittedBy: user?.id,
+        researcherId: user?.id,
+        researcherName: user?.name,
+        department: user?.department,
+        submittedDate: new Date().toISOString(),
       };
-      
-      // Calculate total amount based on budget items
-      const totalBudget = Object.values(budget).reduce((sum, value) => sum + value, 0);
-      
-      // Check if manual amount matches budget
-      if (values.amount !== totalBudget) {
-        if (!confirm(`Your entered amount ($${values.amount}) doesn't match the total budget ($${totalBudget}). Do you want to continue with the entered amount?`)) {
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      
-      // Prepare activities array
-      const activities = ["Research", "Development", "Publication"];
-      
-      // Submit application
-      const result = await submitGrantApplication({
-        title: values.title,
-        description: values.description,
-        category: values.category as GrantCategory,
-        fundingSource: values.fundingSource as FundingSource,
-        amount: values.amount,
-        startDate: values.startDate ? values.startDate.toISOString() : undefined,
-        endDate: values.endDate ? values.endDate.toISOString() : undefined,
-        activities: activities,
-        budget: budget,
-        student_participation: values.studentParticipation,
-        work_plan: values.workPlan,
-      });
-      
-      if (result) {
-        toast.success("Grant application submitted successfully");
-        navigate("/applications");
-      }
-    } catch (error: any) {
-      console.error("Error submitting grant application:", error);
-      toast.error("Failed to submit application: " + error.message);
-    } finally {
-      setIsSubmitting(false);
+
+      // In a real app, this would be an API call to save the grant
+      console.log("Submitting application:", grant);
+
+      // Simulate an API delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Store in localStorage for demo purposes
+      const existingGrants = JSON.parse(localStorage.getItem("au_gms_grants") || "[]");
+      localStorage.setItem("au_gms_grants", JSON.stringify([...existingGrants, grant]));
+
+      toast.success("Application submitted successfully");
+      navigate("/my-grants");
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      toast.error("Failed to submit application");
     }
-  };
-  
-  // Calculate total budget
-  const totalBudget = () => {
-    const values = form.getValues();
-    return (
-      values.facultySalary +
-      values.staffSalary +
-      values.studentStipends +
-      values.equipment +
-      values.supplies +
-      values.travel +
-      values.other
-    );
-  };
-  
-  // Auto-update amount when budget changes
-  React.useEffect(() => {
-    const subscription = form.watch(() => {
-      form.setValue("amount", totalBudget());
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form.watch]);
-
-  const nextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
-  };
-
-  const prevStep = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 0));
-  };
-
-  const handleComplete = () => {
-    form.handleSubmit(onSubmit)();
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <Card className="max-w-4xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
+      <Card>
         <CardHeader>
-          <CardTitle>Grant Application</CardTitle>
-          <CardDescription>
-            Submit a new grant application. All fields marked with * are required.
-          </CardDescription>
-        </CardHeader>
-
-        {/* Step Indicator */}
-        <div className="px-6 mb-6">
-          <div className="flex justify-between">
-            {steps.map((step, idx) => (
-              <div 
-                key={step.id} 
-                className="flex flex-col items-center"
-                style={{ width: `${100 / steps.length}%` }}
-              >
-                <div className="relative w-full">
-                  {/* Line connecting steps */}
-                  {idx < steps.length - 1 && (
-                    <div className={`absolute top-4 h-1 w-full ${idx < currentStep ? 'bg-primary' : 'bg-muted'}`}></div>
-                  )}
-                  {/* Step circle */}
-                  <div className="flex justify-center">
-                    <div 
-                      className={`w-8 h-8 rounded-full flex items-center justify-center z-10 relative
-                      ${idx < currentStep 
-                        ? 'bg-primary text-white' 
-                        : idx === currentStep 
-                          ? 'bg-primary/20 border-2 border-primary text-primary' 
-                          : 'bg-muted text-muted-foreground'}`}
-                    >
-                      {idx < currentStep ? <CheckCircle2 className="h-5 w-5" /> : idx + 1}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2 text-center text-xs sm:text-sm font-medium">
-                  {step.title}
-                </div>
-              </div>
-            ))}
+          <CardTitle className="text-2xl">AU Grant Application Form</CardTitle>
+          <CardDescription>Complete all sections to submit your grant application</CardDescription>
+          
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-200 rounded-full h-2.5 mt-4">
+            <div 
+              className="bg-[#cf2e2e] h-2.5 rounded-full"
+              style={{ width: `${calculateProgress()}%` }}
+            ></div>
           </div>
-        </div>
-
+        </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form className="space-y-6">
-              {currentStep === 0 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title *</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Grant title" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid grid-cols-3 md:grid-cols-9 mb-6">
+                  <TabsTrigger value="basic">Basic</TabsTrigger>
+                  <TabsTrigger value="objectives">Objectives</TabsTrigger>
+                  <TabsTrigger value="literature">Literature</TabsTrigger>
+                  <TabsTrigger value="activities">Activities</TabsTrigger>
+                  <TabsTrigger value="outcomes">Outcomes</TabsTrigger>
+                  <TabsTrigger value="budget">Budget</TabsTrigger>
+                  <TabsTrigger value="students">Students</TabsTrigger>
+                  <TabsTrigger value="workplan">Work Plan</TabsTrigger>
+                  <TabsTrigger value="references">References</TabsTrigger>
+                </TabsList>
+
+                {/* Basic Information */}
+                <TabsContent value="basic" className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Study Title</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter the title of your research project" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="piName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Principal Investigator (PI) Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter PI name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="collegeName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>College Name</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select college" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {collegeOptions.map((college) => (
+                                <SelectItem key={college} value={college}>
+                                  {college}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="yearOfApplication"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Year of Application</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select year" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {yearOptions.map((year) => (
+                                <SelectItem key={year} value={year.toString()}>
+                                  {year}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={form.control}
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormLabel>Grant Category</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select category" />
@@ -282,14 +464,17 @@ const GrantApplicationForm = () => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={form.control}
                       name="fundingSource"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Funding Source *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormLabel>Funding Source</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select funding source" />
@@ -298,9 +483,6 @@ const GrantApplicationForm = () => {
                             <SelectContent>
                               <SelectItem value="internal">Internal</SelectItem>
                               <SelectItem value="external">External</SelectItem>
-                              <SelectItem value="government">Government</SelectItem>
-                              <SelectItem value="private">Private</SelectItem>
-                              <SelectItem value="foundation">Foundation</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -308,405 +490,923 @@ const GrantApplicationForm = () => {
                       )}
                     />
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="startDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>Start Date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
+
+                  <FormField
+                    control={form.control}
+                    name="statementOfPurpose"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Statement of Purpose (2 sentences max)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Brief statement of purpose"
+                            className="h-20"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Limited to 2 sentences, approximately 200 characters
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="background"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Background (1 page max)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Project background"
+                            className="h-40"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Limited to approximately 500 words
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+
+                {/* Objectives */}
+                <TabsContent value="objectives" className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="broadObjective"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Broad Objective (2 sentences max)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Overall project objective"
+                            className="h-20"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Limited to 2 sentences
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Specific Objectives</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendSpecificObjective({ objective: "" })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Objective
+                      </Button>
+                    </div>
+
+                    {specificObjectivesFields.map((field, index) => (
+                      <div key={field.id} className="flex gap-2 items-start">
+                        <div className="flex-1">
+                          <FormField
+                            control={form.control}
+                            name={`specificObjectives.${index}.objective`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <div className="flex gap-2 items-center">
+                                    <span className="text-sm font-medium">{index + 1}.</span>
+                                    <Input placeholder="Specific objective" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (specificObjectivesFields.length > 1) {
+                              removeSpecificObjective(index);
+                            }
+                          }}
+                          className="mt-1"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                    <FormDescription>
+                      Each specific objective should map to a project deliverable
+                    </FormDescription>
+                  </div>
+                </TabsContent>
+
+                {/* Literature Review */}
+                <TabsContent value="literature" className="space-y-6">
+                  <FormField
+                    control={form.control}
+                    name="literatureReview"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Literature Review (1.5 pages max)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Literature review in APA format"
+                            className="h-64"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Limited to approximately 750 words. Include citations in APA format.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+
+                {/* Activities and Timeline */}
+                <TabsContent value="activities" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Activities and Timeline</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendActivity({ 
+                          milestoneNumber: (activitiesFields.length + 1).toString(),
+                          activityDescription: "",
+                          milestoneDeliverable: "",
+                          estimatedTime: "",
+                          technicalApproval: false,
+                          paymentAmount: ""
+                        })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Activity
+                      </Button>
+                    </div>
+
+                    <div className="border rounded-lg overflow-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[80px]">Milestone #</TableHead>
+                            <TableHead className="w-[250px]">Activity Description</TableHead>
+                            <TableHead className="w-[200px]">Milestone Deliverable</TableHead>
+                            <TableHead className="w-[150px]">Est. Time</TableHead>
+                            <TableHead className="w-[120px]">Tech Approval</TableHead>
+                            <TableHead className="w-[120px]">Payment ($)</TableHead>
+                            <TableHead className="w-[60px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {activitiesFields.map((field, index) => (
+                            <TableRow key={field.id}>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`activities.${index}.milestoneNumber`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`activities.${index}.activityDescription`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Description" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`activities.${index}.milestoneDeliverable`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Deliverable" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`activities.${index}.estimatedTime`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Time" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <FormField
+                                  control={form.control}
+                                  name={`activities.${index}.technicalApproval`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Checkbox 
+                                          checked={field.value}
+                                          onCheckedChange={field.onChange}
+                                        />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`activities.${index}.paymentAmount`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="0.00" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
                                 <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (activitiesFields.length > 1) {
+                                      removeActivity(index);
+                                    }
+                                  }}
                                 >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="endDate"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                          <FormLabel>End Date</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Expected Outcomes & M&E Plan */}
+                <TabsContent value="outcomes" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Expected Outcomes</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendExpectedOutcome({ outcome: "" })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Outcome
+                      </Button>
+                    </div>
+
+                    {expectedOutcomesFields.map((field, index) => (
+                      <div key={field.id} className="flex gap-2 items-start">
+                        <div className="flex-1">
+                          <FormField
+                            control={form.control}
+                            name={`expectedOutcomes.${index}.outcome`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <div className="flex gap-2 items-center">
+                                    <span className="text-sm font-medium">{index + 1}.</span>
+                                    <Input placeholder="Expected outcome" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (expectedOutcomesFields.length > 1) {
+                              removeExpectedOutcome(index);
+                            }
+                          }}
+                          className="mt-1"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="monitoringEvaluation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Monitoring and Evaluation (M&E) Plan</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Describe your M&E plan"
+                            className="h-32"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Indicators (Optional)</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendIndicator({ indicator: "" })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Indicator
+                      </Button>
+                    </div>
+
+                    {indicatorsFields.map((field, index) => (
+                      <div key={field.id} className="flex gap-2 items-start">
+                        <div className="flex-1">
+                          <FormField
+                            control={form.control}
+                            name={`indicators.${index}.indicator`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <div className="flex gap-2 items-center">
+                                    <span className="text-sm font-medium">{index + 1}.</span>
+                                    <Input placeholder="Indicator" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeIndicator(index)}
+                          className="mt-1"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                {/* Budget */}
+                <TabsContent value="budget" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Detailed Budget</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendBudgetItem({
+                          budgetNumber: (budgetItemsFields.length + 1).toString(),
+                          activity: "",
+                          duration: "",
+                          responsibility: "",
+                          quantity: "",
+                          frequency: "",
+                          unitCost: "",
+                          unitType: "",
+                          budgetNotes: ""
+                        })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Budget Item
+                      </Button>
+                    </div>
+
+                    <div className="border rounded-lg overflow-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[60px]">#</TableHead>
+                            <TableHead className="w-[150px]">Activity</TableHead>
+                            <TableHead className="w-[100px]">Duration</TableHead>
+                            <TableHead className="w-[150px]">Responsibility</TableHead>
+                            <TableHead className="w-[80px]">Qty</TableHead>
+                            <TableHead className="w-[80px]">Freq</TableHead>
+                            <TableHead className="w-[100px]">Unit Cost</TableHead>
+                            <TableHead className="w-[80px]">Unit</TableHead>
+                            <TableHead className="w-[100px]">Total</TableHead>
+                            <TableHead className="w-[40px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {budgetItemsFields.map((field, index) => (
+                            <TableRow key={field.id}>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`budgetItems.${index}.budgetNumber`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`budgetItems.${index}.activity`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Activity" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`budgetItems.${index}.duration`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Duration" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`budgetItems.${index}.responsibility`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Responsible" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`budgetItems.${index}.quantity`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Qty" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`budgetItems.${index}.frequency`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Freq" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`budgetItems.${index}.unitCost`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="0.00" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`budgetItems.${index}.unitType`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Type" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {form.watch(`budgetItems.${index}.quantity`) && 
+                                form.watch(`budgetItems.${index}.unitCost`) && 
+                                form.watch(`budgetItems.${index}.frequency`) ? 
+                                  `$${(
+                                    parseFloat(form.watch(`budgetItems.${index}.quantity`) || "0") * 
+                                    parseFloat(form.watch(`budgetItems.${index}.unitCost`) || "0") * 
+                                    parseFloat(form.watch(`budgetItems.${index}.frequency`) || "0")
+                                  ).toFixed(2)}` : 
+                                  "$0.00"}
+                              </TableCell>
+                              <TableCell>
                                 <Button
-                                  variant={"outline"}
-                                  className={cn(
-                                    "pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
-                                  )}
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (budgetItemsFields.length > 1) {
+                                      removeBudgetItem(index);
+                                    }
+                                  }}
                                 >
-                                  {field.value ? (
-                                    format(field.value, "PPP")
-                                  ) : (
-                                    <span>Pick a date</span>
-                                  )}
-                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                              <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                              />
-                            </PopoverContent>
-                          </Popover>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
-                </div>
-              )}
+                </TabsContent>
 
-              {currentStep === 1 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description *</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Describe your grant proposal"
-                            className="min-h-[120px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="workPlan"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Work Plan</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Describe your work plan and timeline"
-                            className="min-h-[120px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {/* Student Participation - Horizontal Layout */}
-                  <div className="border rounded-md p-4">
-                    <h3 className="text-lg font-medium mb-4">Student Participation</h3>
-                    <div className="flex items-center space-x-2">
-                      <FormField
-                        control={form.control}
-                        name="studentParticipation"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm w-full">
-                            <div className="space-y-0.5">
-                              <FormLabel>Will students participate in this grant?</FormLabel>
-                              <FormDescription>
-                                Toggle if undergraduate or graduate students will be involved in this project.
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                {/* Student Participation */}
+                <TabsContent value="students" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Student Participation</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendStudentParticipation({
+                          college: "",
+                          department: "",
+                          studentName: "",
+                          role: "",
+                          studentNumber: "",
+                          programme: ""
+                        })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Student
+                      </Button>
                     </div>
-                  </div>
-                </div>
-              )}
 
-              {currentStep === 2 && (
-                <div className="space-y-4">
-                  {/* Detailed Budget - Horizontal Layout */}
-                  <div className="border rounded-md p-4">
-                    <h3 className="text-lg font-medium mb-4">Detailed Budget</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="facultySalary"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between space-x-2 rounded-lg border p-3 shadow-sm">
-                            <FormLabel>Faculty Salary</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                className="w-[120px]"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="staffSalary"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between space-x-2 rounded-lg border p-3 shadow-sm">
-                            <FormLabel>Staff Salary</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                className="w-[120px]"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="studentStipends"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between space-x-2 rounded-lg border p-3 shadow-sm">
-                            <FormLabel>Student Stipends</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                className="w-[120px]"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="equipment"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between space-x-2 rounded-lg border p-3 shadow-sm">
-                            <FormLabel>Equipment</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                className="w-[120px]"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="supplies"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between space-x-2 rounded-lg border p-3 shadow-sm">
-                            <FormLabel>Supplies</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                className="w-[120px]"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="travel"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between space-x-2 rounded-lg border p-3 shadow-sm">
-                            <FormLabel>Travel</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                className="w-[120px]"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="other"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between space-x-2 rounded-lg border p-3 shadow-sm">
-                            <FormLabel>Other Expenses</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                className="w-[120px]"
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="mt-4 flex justify-between items-center bg-muted p-3 rounded-lg">
-                      <span className="font-medium">Total Budget:</span>
-                      <span className="font-bold">${totalBudget().toLocaleString()}</span>
+                    <div className="border rounded-lg overflow-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[150px]">College</TableHead>
+                            <TableHead className="w-[150px]">Department</TableHead>
+                            <TableHead className="w-[150px]">Student Name</TableHead>
+                            <TableHead className="w-[150px]">Role in Project</TableHead>
+                            <TableHead className="w-[120px]">Student Number</TableHead>
+                            <TableHead className="w-[150px]">Programme</TableHead>
+                            <TableHead className="w-[40px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {studentParticipationFields.map((field, index) => (
+                            <TableRow key={field.id}>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`studentParticipation.${index}.college`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="College" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`studentParticipation.${index}.department`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Department" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`studentParticipation.${index}.studentName`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Student name" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`studentParticipation.${index}.role`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Role" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`studentParticipation.${index}.studentNumber`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="ID number" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`studentParticipation.${index}.programme`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Programme" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeStudentParticipation(index)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Total Amount ($) *</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            readOnly
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
+                </TabsContent>
 
-              {currentStep === 3 && (
-                <div className="space-y-6">
-                  <div className="bg-muted/30 p-6 rounded-lg">
-                    <h3 className="font-medium text-lg mb-4">Application Summary</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <h4 className="font-medium text-sm text-muted-foreground mb-1">Title</h4>
-                        <p>{form.getValues().title}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm text-muted-foreground mb-1">Category</h4>
-                        <p className="capitalize">{form.getValues().category}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm text-muted-foreground mb-1">Funding Source</h4>
-                        <p className="capitalize">{form.getValues().fundingSource}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm text-muted-foreground mb-1">Total Amount</h4>
-                        <p>${form.getValues().amount.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm text-muted-foreground mb-1">Start Date</h4>
-                        <p>{form.getValues().startDate ? format(form.getValues().startDate, "PPP") : "Not specified"}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm text-muted-foreground mb-1">End Date</h4>
-                        <p>{form.getValues().endDate ? format(form.getValues().endDate, "PPP") : "Not specified"}</p>
-                      </div>
+                {/* Work Plan */}
+                <TabsContent value="workplan" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Work Plan (Gantt Chart)</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendWorkPlan({
+                          activity: "",
+                          months: Array(12).fill(false)
+                        })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Activity
+                      </Button>
                     </div>
-                    
-                    <div className="mb-4">
-                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Description</h4>
-                      <p className="text-sm">{form.getValues().description}</p>
-                    </div>
-                    
-                    {form.getValues().workPlan && (
-                      <div className="mb-4">
-                        <h4 className="font-medium text-sm text-muted-foreground mb-1">Work Plan</h4>
-                        <p className="text-sm">{form.getValues().workPlan}</p>
-                      </div>
-                    )}
-                    
-                    <div className="mb-4">
-                      <h4 className="font-medium text-sm text-muted-foreground mb-1">Student Participation</h4>
-                      <p>{form.getValues().studentParticipation ? "Yes" : "No"}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-2">Budget Breakdown</h4>
-                      <ul className="space-y-1 text-sm">
-                        {form.getValues().facultySalary > 0 && <li>Faculty Salary: ${form.getValues().facultySalary.toLocaleString()}</li>}
-                        {form.getValues().staffSalary > 0 && <li>Staff Salary: ${form.getValues().staffSalary.toLocaleString()}</li>}
-                        {form.getValues().studentStipends > 0 && <li>Student Stipends: ${form.getValues().studentStipends.toLocaleString()}</li>}
-                        {form.getValues().equipment > 0 && <li>Equipment: ${form.getValues().equipment.toLocaleString()}</li>}
-                        {form.getValues().supplies > 0 && <li>Supplies: ${form.getValues().supplies.toLocaleString()}</li>}
-                        {form.getValues().travel > 0 && <li>Travel: ${form.getValues().travel.toLocaleString()}</li>}
-                        {form.getValues().other > 0 && <li>Other Expenses: ${form.getValues().other.toLocaleString()}</li>}
-                      </ul>
+
+                    <div className="border rounded-lg overflow-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[200px]">Activity</TableHead>
+                            <TableHead>Jan</TableHead>
+                            <TableHead>Feb</TableHead>
+                            <TableHead>Mar</TableHead>
+                            <TableHead>Apr</TableHead>
+                            <TableHead>May</TableHead>
+                            <TableHead>Jun</TableHead>
+                            <TableHead>Jul</TableHead>
+                            <TableHead>Aug</TableHead>
+                            <TableHead>Sep</TableHead>
+                            <TableHead>Oct</TableHead>
+                            <TableHead>Nov</TableHead>
+                            <TableHead>Dec</TableHead>
+                            <TableHead className="w-[40px]"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {workPlanFields.map((field, index) => (
+                            <TableRow key={field.id}>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`workPlan.${index}.activity`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Activity" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              {Array.from({ length: 12 }).map((_, monthIndex) => (
+                                <TableCell key={monthIndex} className="text-center">
+                                  <FormField
+                                    control={form.control}
+                                    name={`workPlan.${index}.months.${monthIndex}`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormControl>
+                                          <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                          />
+                                        </FormControl>
+                                      </FormItem>
+                                    )}
+                                  />
+                                </TableCell>
+                              ))}
+                              <TableCell>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (workPlanFields.length > 1) {
+                                      removeWorkPlan(index);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
-                  <div className="bg-muted/30 p-6 rounded-lg">
-                    <div className="flex items-start gap-4">
-                      <div className="rounded-full bg-primary/20 p-2">
-                        <CheckCircle2 className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-lg">Ready to Submit</h3>
-                        <p className="text-muted-foreground">Please review your application details above before submitting.</p>
-                      </div>
+                </TabsContent>
+
+                {/* References */}
+                <TabsContent value="references" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">References (APA Format)</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendReference({ reference: "" })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Reference
+                      </Button>
                     </div>
+
+                    {referencesFields.map((field, index) => (
+                      <div key={field.id} className="flex gap-2 items-start">
+                        <div className="flex-1">
+                          <FormField
+                            control={form.control}
+                            name={`references.${index}.reference`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <div className="flex gap-2 items-center">
+                                    <span className="text-sm font-medium">{index + 1}.</span>
+                                    <Input placeholder="Reference in APA format" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (referencesFields.length > 1) {
+                              removeReference(index);
+                            }
+                          }}
+                          className="mt-1"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                    <FormDescription>
+                      All references must be in APA format
+                    </FormDescription>
                   </div>
-                </div>
-              )}
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex justify-between pt-6 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={moveToPreviousTab}
+                  disabled={activeTab === "basic"}
+                >
+                  Previous
+                </Button>
+                
+                {activeTab === "references" ? (
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => navigate("/my-grants")}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" variant="default">
+                      Submit Application
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button" onClick={moveToNextTab}>
+                    Next
+                  </Button>
+                )}
+              </div>
             </form>
           </Form>
         </CardContent>
-
-        <CardFooter className="flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={currentStep === 0 ? () => navigate(-1) : prevStep}
-            type="button"
-          >
-            {currentStep === 0 ? "Cancel" : "Previous"}
-          </Button>
-          <Button 
-            onClick={currentStep === steps.length - 1 ? handleComplete : nextStep}
-            disabled={isSubmitting}
-            type={currentStep === steps.length - 1 ? "button" : "button"}
-          >
-            {currentStep === steps.length - 1 
-              ? (isSubmitting ? "Submitting..." : "Submit Application") 
-              : "Next Step"}
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );
