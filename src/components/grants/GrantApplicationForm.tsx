@@ -919,468 +919,74 @@ const GrantApplicationForm: React.FC = () => {
                       </Button>
                     </div>
 
-                    <div className="border rounded-lg overflow-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[60px]">#</TableHead>
-                            <TableHead className="w-[150px]">Activity</TableHead>
-                            <TableHead className="w-[100px]">Duration</TableHead>
-                            <TableHead className="w-[150px]">Responsibility</TableHead>
-                            <TableHead className="w-[80px]">Qty</TableHead>
-                            <TableHead className="w-[80px]">Freq</TableHead>
-                            <TableHead className="w-[100px]">Unit Cost</TableHead>
-                            <TableHead className="w-[80px]">Unit</TableHead>
-                            <TableHead className="w-[100px]">Total</TableHead>
-                            <TableHead className="w-[40px]"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {budgetItemsFields.map((field, index) => (
-                            <TableRow key={field.id}>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`budgetItems.${index}.budgetNumber`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`budgetItems.${index}.activity`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Activity" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`budgetItems.${index}.duration`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Duration" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`budgetItems.${index}.responsibility`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Responsibility" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`budgetItems.${index}.quantity`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Qty" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`budgetItems.${index}.frequency`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Freq" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`budgetItems.${index}.unitCost`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Unit Cost" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`budgetItems.${index}.unitType`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Unit" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                {parseFloat(form.watch(`budgetItems.${index}.quantity`) || "0") * 
-                                  parseFloat(form.watch(`budgetItems.${index}.frequency`) || "0") * 
-                                  parseFloat(form.watch(`budgetItems.${index}.unitCost`) || "0")}
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (budgetItemsFields.length > 1) {
-                                      removeBudgetItem(index);
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* Student Participation */}
-                <TabsContent value="students" className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <FormLabel className="text-base">Student Participation (Optional)</FormLabel>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => appendStudentParticipation({ 
-                          college: "", 
-                          department: "", 
-                          studentName: "", 
-                          role: "", 
-                          studentNumber: "", 
-                          programme: "" 
-                        })}
-                      >
-                        <Plus className="h-4 w-4 mr-1" /> Add Student
-                      </Button>
-                    </div>
-
-                    <div className="border rounded-lg overflow-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>College</TableHead>
-                            <TableHead>Department</TableHead>
-                            <TableHead>Student Name</TableHead>
-                            <TableHead>Role</TableHead>
-                            <TableHead>Student #</TableHead>
-                            <TableHead>Programme</TableHead>
-                            <TableHead className="w-[40px]"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {studentParticipationFields.map((field, index) => (
-                            <TableRow key={field.id}>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`studentParticipation.${index}.college`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="College" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`studentParticipation.${index}.department`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Department" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`studentParticipation.${index}.studentName`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Student Name" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`studentParticipation.${index}.role`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Role" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`studentParticipation.${index}.studentNumber`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Student #" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`studentParticipation.${index}.programme`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Programme" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removeStudentParticipation(index)}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* Work Plan */}
-                <TabsContent value="workplan" className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <FormLabel className="text-base">Work Plan</FormLabel>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => appendWorkPlan({ 
-                          activity: "", 
-                          months: Array(12).fill(false) 
-                        })}
-                      >
-                        <Plus className="h-4 w-4 mr-1" /> Add Work Plan Item
-                      </Button>
-                    </div>
-
-                    <div className="border rounded-lg overflow-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[150px]">Activity</TableHead>
-                            <TableHead className="w-[100px]">Months</TableHead>
-                            <TableHead className="w-[40px]"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {workPlanFields.map((field, index) => (
-                            <TableRow key={field.id}>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`workPlan.${index}.activity`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <Input placeholder="Activity" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <FormField
-                                  control={form.control}
-                                  name={`workPlan.${index}.months`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        <div className="flex gap-2">
-                                          {Array(12).fill(false).map((_, i) => (
-                                            <Checkbox
-                                              key={i}
-                                              checked={field.value[i]}
-                                              onCheckedChange={(value) => {
-                                                const newMonths = [...field.value];
-                                                newMonths[i] = value;
-                                                field.onChange(newMonths);
-                                              }}
-                                            />
-                                          ))}
-                                        </div>
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (workPlanFields.length > 1) {
-                                      removeWorkPlan(index);
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                {/* References */}
-                <TabsContent value="references" className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <FormLabel className="text-base">References</FormLabel>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => appendReference({ reference: "" })}
-                      >
-                        <Plus className="h-4 w-4 mr-1" /> Add Reference
-                      </Button>
-                    </div>
-
-                    {referencesFields.map((field, index) => (
-                      <div key={field.id} className="flex gap-2 items-start">
-                        <div className="flex-1">
+                    {budgetItemsFields.map((field, index) => (
+                      <div key={field.id} className="border rounded-lg p-4 mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium">Budget Item #{index + 1}</h4>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (budgetItemsFields.length > 1) {
+                                removeBudgetItem(index);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                           <FormField
                             control={form.control}
-                            name={`references.${index}.reference`}
+                            name={`budgetItems.${index}.budgetNumber`}
                             render={({ field }) => (
                               <FormItem>
+                                <FormLabel>Item #</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Reference" {...field} />
+                                  <Input {...field} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeReference(index)}
-                          className="mt-1"
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              <div className="flex gap-2 justify-between pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={moveToPreviousTab}
-                  disabled={activeTab === "basic"}
-                >
-                  Previous
-                </Button>
-                {activeTab === "references" ? (
-                  <Button type="submit">Submit Application</Button>
-                ) : (
-                  <Button 
-                    type="button" 
-                    onClick={moveToNextTab}
-                  >
-                    Next
-                  </Button>
-                )}
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-export default GrantApplicationForm;
+                          
+                          <FormField
+                            control={form.control}
+                            name={`budgetItems.${index}.activity`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Activity</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Activity" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name={`budgetItems.${index}.duration`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Duration</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Duration" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name={`budgetItems.${index}.responsibility`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Responsibility</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Responsibility" {...field} />
+                                </FormControl>
+                                <FormMessage />
