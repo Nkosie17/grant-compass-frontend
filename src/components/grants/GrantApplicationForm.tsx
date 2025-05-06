@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -894,7 +895,7 @@ const GrantApplicationForm: React.FC = () => {
                   </div>
                 </TabsContent>
 
-                {/* Budget */}
+                {/* Budget - Restructured to make input areas more visible */}
                 <TabsContent value="budget" className="space-y-6">
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
@@ -920,7 +921,7 @@ const GrantApplicationForm: React.FC = () => {
                     </div>
 
                     {budgetItemsFields.map((field, index) => (
-                      <div key={field.id} className="border rounded-lg p-4 mb-4">
+                      <Card key={field.id} className="p-4">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="font-medium">Budget Item #{index + 1}</h4>
                           <Button
@@ -937,21 +938,7 @@ const GrantApplicationForm: React.FC = () => {
                           </Button>
                         </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <FormField
-                            control={form.control}
-                            name={`budgetItems.${index}.budgetNumber`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Item #</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           <FormField
                             control={form.control}
                             name={`budgetItems.${index}.activity`}
@@ -990,3 +977,384 @@ const GrantApplicationForm: React.FC = () => {
                                   <Input placeholder="Responsibility" {...field} />
                                 </FormControl>
                                 <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name={`budgetItems.${index}.quantity`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Quantity</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Quantity" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`budgetItems.${index}.frequency`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Frequency</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Frequency" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`budgetItems.${index}.unitCost`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Unit Cost</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Unit Cost" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`budgetItems.${index}.unitType`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Unit Type</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Unit Type" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`budgetItems.${index}.budgetNotes`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Notes (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Budget notes" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                {/* Student Participation - Restructured for better visibility */}
+                <TabsContent value="students" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Student Participation</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendStudentParticipation({ 
+                          college: "",
+                          department: "",
+                          studentName: "",
+                          role: "",
+                          studentNumber: "",
+                          programme: ""
+                        })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Student
+                      </Button>
+                    </div>
+
+                    {studentParticipationFields.map((field, index) => (
+                      <Card key={field.id} className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium">Student #{index + 1}</h4>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeStudentParticipation(index)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          <FormField
+                            control={form.control}
+                            name={`studentParticipation.${index}.studentName`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Student Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Student Name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name={`studentParticipation.${index}.studentNumber`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Student Number</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Student Number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name={`studentParticipation.${index}.role`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Role in Project</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Role" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name={`studentParticipation.${index}.college`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>College</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="College" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name={`studentParticipation.${index}.department`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Department</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Department" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name={`studentParticipation.${index}.programme`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Programme</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Programme" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </TabsContent>
+
+                {/* Work Plan */}
+                <TabsContent value="workplan" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">Work Plan</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendWorkPlan({ activity: "", months: Array(12).fill(false) })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Work Plan Item
+                      </Button>
+                    </div>
+
+                    <div className="border rounded-lg overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[250px]">Activity</TableHead>
+                            <TableHead>Jan</TableHead>
+                            <TableHead>Feb</TableHead>
+                            <TableHead>Mar</TableHead>
+                            <TableHead>Apr</TableHead>
+                            <TableHead>May</TableHead>
+                            <TableHead>Jun</TableHead>
+                            <TableHead>Jul</TableHead>
+                            <TableHead>Aug</TableHead>
+                            <TableHead>Sep</TableHead>
+                            <TableHead>Oct</TableHead>
+                            <TableHead>Nov</TableHead>
+                            <TableHead>Dec</TableHead>
+                            <TableHead></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {workPlanFields.map((field, index) => (
+                            <TableRow key={field.id}>
+                              <TableCell>
+                                <FormField
+                                  control={form.control}
+                                  name={`workPlan.${index}.activity`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Input placeholder="Activity" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              {Array(12).fill(0).map((_, monthIndex) => (
+                                <TableCell key={monthIndex} className="text-center">
+                                  <FormField
+                                    control={form.control}
+                                    name={`workPlan.${index}.months.${monthIndex}`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormControl>
+                                          <Checkbox 
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
+                                          />
+                                        </FormControl>
+                                      </FormItem>
+                                    )}
+                                  />
+                                </TableCell>
+                              ))}
+                              <TableCell>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (workPlanFields.length > 1) {
+                                      removeWorkPlan(index);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* References */}
+                <TabsContent value="references" className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <FormLabel className="text-base">References</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendReference({ reference: "" })}
+                      >
+                        <Plus className="h-4 w-4 mr-1" /> Add Reference
+                      </Button>
+                    </div>
+
+                    {referencesFields.map((field, index) => (
+                      <div key={field.id} className="flex gap-2 items-start">
+                        <div className="flex-1">
+                          <FormField
+                            control={form.control}
+                            name={`references.${index}.reference`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormControl>
+                                  <div className="flex gap-2 items-center">
+                                    <span className="text-sm font-medium">{index + 1}.</span>
+                                    <Input placeholder="APA format reference" {...field} />
+                                  </div>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (referencesFields.length > 1) {
+                              removeReference(index);
+                            }
+                          }}
+                          className="mt-1"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
+
+              <div className="flex justify-between mt-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={moveToPreviousTab}
+                  disabled={activeTab === "basic"}
+                >
+                  Previous Section
+                </Button>
+                {activeTab !== "references" ? (
+                  <Button
+                    type="button"
+                    onClick={moveToNextTab}
+                  >
+                    Next Section
+                  </Button>
+                ) : (
+                  <Button type="submit" className="bg-[#cf2e2e] hover:bg-[#9e2121]">
+                    Submit Application
+                  </Button>
+                )}
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default GrantApplicationForm;
